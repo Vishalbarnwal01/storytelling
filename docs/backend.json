@@ -1,0 +1,323 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the AudioVerse platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "profileName": {
+          "type": "string",
+          "description": "The profile name of the user."
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biography of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AudioStory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AudioStory",
+      "type": "object",
+      "description": "Represents an audio story available on the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the audio story."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the audio story."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief summary or description of the audio story."
+        },
+        "audioUrl": {
+          "type": "string",
+          "description": "URL of the audio file.",
+          "format": "uri"
+        },
+        "coverImageUrl": {
+          "type": "string",
+          "description": "URL of the cover image for the audio story.",
+          "format": "uri"
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N AudioStory) The user ID of the creator who uploaded the story."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the audio story was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the audio story was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "audioUrl",
+        "coverImageUrl",
+        "creatorId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Like": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Like",
+      "type": "object",
+      "description": "Represents a user's like for an audio story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the like."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Like) The user ID who liked the story."
+        },
+        "audioStoryId": {
+          "type": "string",
+          "description": "Reference to AudioStory. (Relationship: AudioStory 1:N Like) The audio story ID that was liked."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the like was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "audioStoryId",
+        "createdAt"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a user's comment on an audio story.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the comment."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Comment) The user ID who made the comment."
+        },
+        "audioStoryId": {
+          "type": "string",
+          "description": "Reference to AudioStory. (Relationship: AudioStory 1:N Comment) The audio story ID that the comment is for."
+        },
+        "text": {
+          "type": "string",
+          "description": "The text content of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the comment was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the comment was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "audioStoryId",
+        "text",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CreatorApplication": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CreatorApplication",
+      "type": "object",
+      "description": "Represents an application from a user to become a content creator.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the creator application."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 CreatorApplication) The user ID who submitted the application."
+        },
+        "applicationText": {
+          "type": "string",
+          "description": "The text provided by the user in their application."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the application (e.g., 'pending', 'approved', 'rejected')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the application was submitted.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the application was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "applicationText",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership ensures only the user can access their own profile data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/audioStories/{audioStoryId}",
+        "definition": {
+          "entityName": "AudioStory",
+          "schema": {
+            "$ref": "#/backend/entities/AudioStory"
+          },
+          "description": "Stores audio story information. Includes denormalized 'creatorId' for authorization independence.",
+          "params": [
+            {
+              "name": "audioStoryId",
+              "description": "The unique identifier of the audio story."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/audioStories/{audioStoryId}/likes/{likeId}",
+        "definition": {
+          "entityName": "Like",
+          "schema": {
+            "$ref": "#/backend/entities/Like"
+          },
+          "description": "Stores likes for each audio story.  'userId' indicates who liked the story.",
+          "params": [
+            {
+              "name": "audioStoryId",
+              "description": "The unique identifier of the audio story."
+            },
+            {
+              "name": "likeId",
+              "description": "The unique identifier of the like."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/audioStories/{audioStoryId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments for each audio story. 'userId' indicates who created the comment.",
+          "params": [
+            {
+              "name": "audioStoryId",
+              "description": "The unique identifier of the audio story."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier of the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/creatorApplications/{applicationId}",
+        "definition": {
+          "entityName": "CreatorApplication",
+          "schema": {
+            "$ref": "#/backend/entities/CreatorApplication"
+          },
+          "description": "Stores creator applications for each user. Path-based ownership ensures only the user and admins can access the application.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "applicationId",
+              "description": "The unique identifier of the creator application."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support AudioVerse's core features (audio story playback, likes, comments, creator applications, and audio uploads) while prioritizing security, scalability, and debuggability.  It emphasizes authorization independence through denormalization, structural segregation for homogeneous security postures, and consistent access modeling using path-based ownership and membership maps.\n\n*   **Users (Private Data):** User data is stored in `/users/{userId}`. This provides path-based ownership for user-specific data, simplifying security rules.  Each user has their own document that contains their profile information. This structure is highly secure and makes ownership-based security rules simple and efficient.\n*   **Audio Stories (Collaborative Data):** Audio stories are stored in the `/audioStories/{audioStoryId}` collection.  The `creatorId` field represents the owner.  Likes and Comments exist as subcollections.  This ensures that each audio story can be accessed independently without needing to traverse user documents. No `get()` calls are needed, as the `creatorId` is denormalized.  A `members` field could be added to support collaborative stories if that is a planned future feature, but it's not currently required.\n*   **Likes and Comments (User-Generated Content):** Likes are stored in `/audioStories/{audioStoryId}/likes/{likeId}`, and comments are stored in `/audioStories/{audioStoryId}/comments/{commentId}`.  This establishes a clear hierarchy. The `userId` field in each like and comment allows for easy querying of likes/comments made by a specific user.  The security rules can easily verify the user ID to ensure that only authenticated users can create likes/comments.\n*   **Creator Applications (Private Data):**  Creator applications are stored in `/users/{userId}/creatorApplications/{applicationId}`. This path-based ownership ensures that only the user and admins can read the application, while enabling secure list operations.\n\n**Authorization Independence:** Authorization independence is achieved by denormalizing authorization data (e.g., `creatorId` in audio stories). This removes the need for `get()` calls in security rules, enabling atomic operations.\n\n**QAPs Support:**\n\n*   Secure `list` operations are supported via structural segregation.  Sensitive data is stored under `/users/{userId}`, allowing rules to easily restrict access to only the authenticated user.\n*   Membership maps (if collaborative stories were implemented) would enable efficient `list` operations for shared resources, as role information is stored directly within the document.\n"
+  }
+}

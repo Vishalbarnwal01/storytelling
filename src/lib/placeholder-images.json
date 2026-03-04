@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "cover1",
+      "description": "Abstract sound waves",
+      "imageUrl": "https://images.unsplash.com/photo-1656614291816-cdcd65e0cd0a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBzb3VuZHdhdmV8ZW58MHx8fHwxNzY0MTEwNDU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract soundwave"
+    },
+    {
+      "id": "cover2",
+      "description": "Mysterious forest at night",
+      "imageUrl": "https://images.unsplash.com/photo-1633901605644-e7f62844a460?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxteXN0ZXJpb3VzJTIwZm9yZXN0fGVufDB8fHx8MTc2NDE2MDMyOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mysterious forest"
+    },
+    {
+      "id": "cover3",
+      "description": "Futuristic cityscape",
+      "imageUrl": "https://images.unsplash.com/photo-1756037020602-0853d1d0e62d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmdXR1cmlzdGljJTIwY2l0eXNjYXBlfGVufDB8fHx8MTc2NDEyODIwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic cityscape"
+    },
+    {
+      "id": "cover4",
+      "description": "Old open book",
+      "imageUrl": "https://images.unsplash.com/photo-1541963463532-d68292c34b19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxvcGVuJTIwYm9va3xlbnwwfHx8fDE3NjQxMTcwNDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "open book"
+    },
+    {
+      "id": "cover5",
+      "description": "Cozy fireplace",
+      "imageUrl": "https://images.unsplash.com/photo-1696814543693-31fcf942ccb7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb3p5JTIwZmlyZXBsYWNlfGVufDB8fHx8MTc2NDE1MTEwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cozy fireplace"
+    },
+    {
+      "id": "cover6",
+      "description": "Vast desert landscape",
+      "imageUrl": "https://images.unsplash.com/photo-1634470943099-29cf2b9d7ca1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkZXNlcnQlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzY0MTU3MTM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "desert landscape"
+    },
+    {
+      "id": "avatar1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjQxNDg4ODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar2",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1521119989659-a83eee488004?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjQxNDg4ODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar3",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjQxNDg4ODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
+}
