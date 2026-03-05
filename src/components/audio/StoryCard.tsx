@@ -3,10 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Story } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, PlayCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Heart, MessageCircle, Play, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +15,28 @@ interface StoryCardProps {
 
 export default function StoryCard({ story }: StoryCardProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [duration, setDuration] = useState(story.duration || '00:00');
   const { toast } = useToast();
+
+  // Calculate duration from audio file
+  useEffect(() => {
+    if (story.audioUrl) {
+      const audio = new Audio();
+      audio.src = story.audioUrl;
+      
+      const updateDuration = () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+          const minutes = Math.floor(audio.duration / 60);
+          const seconds = Math.floor(audio.duration % 60);
+          const formattedDuration = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          setDuration(formattedDuration);
+        }
+      };
+      
+      audio.addEventListener('loadedmetadata', updateDuration);
+      return () => audio.removeEventListener('loadedmetadata', updateDuration);
+    }
+  }, [story.audioUrl]);
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -24,50 +44,80 @@ export default function StoryCard({ story }: StoryCardProps) {
     setIsLiked(!isLiked);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handlePlay = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigator.clipboard.writeText(`${window.location.origin}/story/${story.id}`);
-    toast({
-      title: 'Link Copied!',
-      description: 'You can now share this story with your friends.',
-    });
+    // Play functionality can be added here
   };
 
   return (
-    <Card className="w-full overflow-hidden border-0 bg-card/50 transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/20">
-      <Link href={`/story/${story.id}`} aria-label={`Listen to ${story.title}`}>
-        <CardHeader className="p-0 relative group">
-          <Image
-            src={story.coverImage}
-            alt={`Cover art for ${story.title}`}
-            width={600}
-            height={600}
-            className="aspect-square object-cover w-full"
-            data-ai-hint={story.imageHint}
-          />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <PlayCircle className="h-16 w-16 text-white" />
+    <Link href={`/story/${story.id}`} aria-label={`Listen to ${story.title}`}>
+      <div className="group relative overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
+        <div className="block">
+          {/* Image Container */}
+          <div className="relative aspect-[4/3] w-full overflow-hidden">
+            <Image
+              src={story.coverImage}
+              alt={`Cover art for ${story.title}`}
+              width={438}
+              height={328}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              data-ai-hint={story.imageHint}
+            />
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            
+            {/* Play Button - Bottom Right */}
+            <button
+              onClick={handlePlay}
+              className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg hover:bg-primary/90 transition-all duration-200"
+            >
+              <Play size={18} fill="currentColor" className="ml-0.5" />
+            </button>
+            
+            {/* Duration Badge - Bottom Left */}
+            <div className="absolute bottom-3 left-3 flex items-center space-x-1">
+              <Clock size={14} className="text-white/80" />
+              <span className="text-xs text-white/80 font-medium">{duration}</span>
+            </div>
           </div>
-        </CardHeader>
-      </Link>
-      <CardContent className="p-4">
-        <Link href={`/story/${story.id}`}>
-          <CardTitle className="font-headline text-lg leading-tight truncate hover:text-accent transition-colors">
-            {story.title}
-          </CardTitle>
-        </Link>
-        <p className="text-sm text-muted-foreground mt-1">{story.author}</p>
-      </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <Button variant="ghost" size="sm" onClick={handleLike} className="px-2">
-          <Heart className={cn('mr-2 h-4 w-4 transition-colors', isLiked ? 'text-accent fill-accent' : '')} />
-          {story.likes + (isLiked ? 1 : 0)}
-        </Button>
-        <Button variant="ghost" size="icon" onClick={handleShare} className="h-8 w-8">
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
+          
+          {/* Content Section */}
+          <div className="p-4">
+            {/* Title */}
+            <h3 className="font-semibold line-clamp-1">
+              {story.title}
+            </h3>
+            
+            {/* Author */}
+            <p className="text-sm text-muted-foreground mt-1">{story.author}</p>
+            
+            {/* Engagement Stats */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1 cursor-pointer" onClick={handleLike}>
+                  <Heart
+                    size={14}
+                    className={cn(
+                      'transition-colors',
+                      isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
+                    )}
+                  />
+                  <span className="text-xs text-muted-foreground">{story.likes + (isLiked ? 1 : 0)}</span>
+                </div>
+                
+                <div className="flex items-center space-x-1">
+                  <MessageCircle size={14} className="text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{story.comments?.length || 0}</span>
+                </div>
+              </div>
+              
+              <span className="text-xs text-muted-foreground">2 years ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
