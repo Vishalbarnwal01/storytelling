@@ -166,7 +166,7 @@ export default function StoryCard({ story }: StoryCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Create song object from story data
+   
     const song = {
       id: story.id,
       title: story.title,
@@ -175,7 +175,7 @@ export default function StoryCard({ story }: StoryCardProps) {
       audioUrl: story.audioUrl,
     };
     
-    // Play the song
+   
     playSong(song);
   };
 

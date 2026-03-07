@@ -3,28 +3,32 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Clock, MessageCircle, Heart, User, Trash2, Loader2 } from 'lucide-react';
+import { Clock, MessageCircle, Heart, User, Trash2, Loader2, Calendar, Play, Pause, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import AudioPlayer from '@/components/audio/AudioPlayer';
-import StoryActions from '@/components/audio/StoryActions';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAudio } from '@/contexts/AudioContext';
+import { motion } from 'framer-motion';
 
 interface Story {
   id: number;
   title: string;
   description: string;
   audioPath: string;
+  audioUrl?: string;
   thumbnailPath: string;
+  coverImage?: string;
   creatorEmail: string;
+  author?: string;
   status: string;
   views: number;
   likes: number;
   createdAt: string;
+  duration?: string;
 }
 
 interface Comment {
@@ -39,6 +43,7 @@ export default function StoryDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { playSong, currentAudio, isPlaying, togglePlayPause } = useAudio();
   const storyId = params.id as string;
 
   const [story, setStory] = useState<Story | null>(null);
@@ -51,6 +56,7 @@ export default function StoryDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [duration, setDuration] = useState('00:00');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -58,10 +64,8 @@ export default function StoryDetailPage() {
       setCurrentUser(JSON.parse(storedUser));
     }
     
-    // For now, check if user email is admin (you can improve this with a role system)
     if (storedUser) {
       const user = JSON.parse(storedUser);
-      // Check if user is admin - you can modify this logic
       setIsAdmin(user.role === 'admin' || user.email?.includes('admin'));
     }
   }, []);
@@ -78,6 +82,24 @@ export default function StoryDetailPage() {
         if (storyRes.ok) {
           const storyData = await storyRes.json();
           setStory(storyData);
+
+          // Calculate duration from audio file
+          if (storyData.audioPath || storyData.audioUrl) {
+            const audioUrl = storyData.audioUrl || `/uploads/${storyData.audioPath}`;
+            const audio = new Audio();
+            audio.src = audioUrl;
+            
+            const updateDuration = () => {
+              if (audio.duration && !isNaN(audio.duration)) {
+                const minutes = Math.floor(audio.duration / 60);
+                const seconds = Math.floor(audio.duration % 60);
+                const formattedDuration = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                setDuration(formattedDuration);
+              }
+            };
+            
+            audio.addEventListener('loadedmetadata', updateDuration);
+          }
         }
 
         if (commentsRes.ok) {
@@ -148,7 +170,6 @@ export default function StoryDetailPage() {
         });
         setCommentText('');
 
-        // Refresh comments
         const commentsRes = await fetch(`/api/story/${storyId}/comments`);
         if (commentsRes.ok) {
           const commentsData = await commentsRes.json();
@@ -219,7 +240,6 @@ export default function StoryDetailPage() {
 
     try {
       if (isLiked) {
-        // Unlike
         const response = await fetch('/api/likes/delete', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
@@ -245,7 +265,6 @@ export default function StoryDetailPage() {
           });
         }
       } else {
-        // Like
         const response = await fetch('/api/likes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -290,9 +309,47 @@ export default function StoryDetailPage() {
     }
   };
 
+  const handlePlay = () => {
+    if (!story) return;
+
+    const audioUrl = story.audioUrl || `/uploads/${story.audioPath}`;
+    const song = {
+      id: story.id,
+      title: story.title,
+      author: story.creatorEmail,
+      coverImage: story.coverImage || `/uploads/${story.thumbnailPath}`,
+      audioUrl: audioUrl,
+    };
+
+    if (currentAudio?.id === story.id) {
+      togglePlayPause();
+    } else {
+      playSong(song);
+    }
+  };
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: story?.title,
+        text: story?.description,
+        url: url,
+      }).catch(err => {
+        console.error('Error sharing:', err);
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Story link copied to clipboard",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-4xl py-8 sm:py-12">
+      <div className="container mx-auto max-w-6xl py-8 sm:py-12">
         <div className="flex justify-center items-center h-96">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -302,7 +359,7 @@ export default function StoryDetailPage() {
 
   if (!story) {
     return (
-      <div className="container mx-auto max-w-4xl py-8 sm:py-12">
+      <div className="container mx-auto max-w-6xl py-8 sm:py-12">
         <div className="text-center">
           <p className="text-xl font-semibold">Story not found</p>
         </div>
@@ -310,113 +367,196 @@ export default function StoryDetailPage() {
     );
   }
 
+  const isCurrentlyPlaying = currentAudio?.id === story.id && isPlaying;
+
   return (
-    <div className="container mx-auto max-w-4xl py-8 sm:py-12">
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-1">
-          {story.thumbnailPath && (
-            <Image
-              src={`/uploads/${story.thumbnailPath}`}
-              alt={story.title}
-              width={600}
-              height={600}
-              className="rounded-lg aspect-square object-cover w-full shadow-lg shadow-black/30"
-              priority
-            />
-          )}
-        </div>
-        <div className="md:col-span-2 flex flex-col">
-          <h1 className="text-3xl sm:text-4xl font-bold">{story.title}</h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground mt-2">
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>{story.creatorEmail}</span>
+    <div className="container mx-auto max-w-6xl py-8 sm:py-12 space-y-12">
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Side - Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Title */}
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+          >
+            {story.title}
+          </motion.h1>
+          
+          {/* Metadata */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Calendar size={16} />
+              <span>{new Date(story.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4" />
-              <span>{new Date(story.createdAt).toLocaleDateString()}</span>
+            <div className="flex items-center gap-1.5">
+              <Clock size={16} />
+              <span>{duration}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Heart size={16} />
+              <span>{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>
             </div>
           </div>
-
-          <div className="my-6">
-            <AudioPlayer audioUrl={`/uploads/${story.audioPath}`} />
+          
+          {/* Author Section */}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={`https://picsum.photos/seed/${story.creatorEmail}/48/48`} alt={story.creatorEmail} />
+              <AvatarFallback>{story.creatorEmail.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold text-base">{story.creatorEmail}</p>
+              <p className="text-xs text-muted-foreground">Storyteller</p>
+            </div>
           </div>
-
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground">{story.description}</p>
+          
+          {/* Description */}
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <p className="text-muted-foreground/90">{story.description}</p>
           </div>
-
-          {/* Likes and Comments Stats */}
-          <div className="mt-6 flex items-center gap-6">
-            <button
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 pt-4">
+            <Button 
+              onClick={handlePlay}
+              disabled={isLikeLoading}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              {isCurrentlyPlaying ? (
+                <>
+                  <Pause size={18} />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <Play size={18} />
+                  Play
+                </>
+              )}
+            </Button>
+            <Button 
+              variant={isLiked ? "default" : "outline"}
               onClick={handleLike}
               disabled={isLikeLoading}
-              className="flex items-center space-x-2 hover:opacity-70 transition-opacity disabled:opacity-50"
+              size="lg"
+              className="flex items-center gap-2"
             >
-              <Heart
-                size={20}
-                className={cn(
-                  'transition-colors',
-                  isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
-                )}
+              <Heart 
+                size={18} 
+                fill={isLiked ? "currentColor" : "none"}
               />
-              <span className="font-semibold">{likeCount} {likeCount === 1 ? 'Like' : 'Likes'}</span>
-            </button>
-            
-            <div className="flex items-center space-x-2">
-              <MessageCircle size={20} className="text-muted-foreground" />
-              <span className="font-semibold">{comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}</span>
+              {isLiked ? "Liked" : "Like"}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleShare}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <Share2 size={18} />
+              Share
+            </Button>
+          </div>
+        </div>
+        
+        {/* Right Side - Cover Image (Sticky) */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-24">
+            {/* Cover Image */}
+            <div className="rounded-xl overflow-hidden aspect-square shadow-lg">
+              <Image
+                src={story.coverImage || `/uploads/${story.thumbnailPath}`}
+                alt={story.title}
+                width={500}
+                height={500}
+                className="h-full w-full object-cover"
+              />
             </div>
+            
+            {/* Audio Wave Animation */}
+            {isCurrentlyPlaying && (
+              <div className="mt-6 flex justify-center">
+                <div className="flex gap-1 h-12 items-end">
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 bg-primary rounded-full"
+                      initial={{ height: 8 }}
+                      animate={{ height: [8, 24, 8, 12, 28, 12, 16, 24] }}
+                      transition={{
+                        duration: 0.6,
+                        repeat: Infinity,
+                        delay: i * 0.1,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <Separator className="my-8 sm:my-12" />
+      <Separator />
 
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 flex items-center">
-          <MessageCircle className="mr-3 h-6 w-6" /> Comments ({comments.length})
+      {/* Comments Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold flex items-center gap-3">
+          <MessageCircle className="h-6 w-6" />
+          Comments ({comments.length})
         </h2>
         
-        <Card className="p-4 sm:p-6 mb-8">
-          <form onSubmit={handlePostComment} className="flex items-start gap-4">
-            <Avatar>
-              <AvatarImage src={`https://picsum.photos/seed/${currentUser?.email}/40/40`} />
-              <AvatarFallback>{currentUser?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="w-full">
-              <Input
-                placeholder={currentUser ? 'Add a comment...' : 'Log in to comment...'}
-                className="mb-2"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                disabled={!currentUser || isSubmitting}
-              />
-              <Button type="submit" size="sm" disabled={!currentUser || isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Post Comment
-              </Button>
-            </div>
-          </form>
-        </Card>
+        {/* Comment Input */}
+        {currentUser ? (
+          <Card className="p-4 sm:p-6">
+            <form onSubmit={handlePostComment} className="flex gap-4">
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarImage src={`https://picsum.photos/seed/${currentUser?.email}/40/40`} />
+                <AvatarFallback>{currentUser?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="w-full space-y-3">
+                <Input
+                  placeholder="Add a comment..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  disabled={isSubmitting}
+                  className="text-sm"
+                />
+                <Button type="submit" size="sm" disabled={isSubmitting || !commentText.trim()}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Post Comment
+                </Button>
+              </div>
+            </form>
+          </Card>
+        ) : (
+          <Card className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">Please log in to comment on this story.</p>
+            <Button onClick={() => router.push('/login')}>Log In</Button>
+          </Card>
+        )}
 
-        <div className="space-y-6">
+        {/* Comments List */}
+        <div className="space-y-4">
           {comments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground">
               <p>No comments yet. Be the first to comment!</p>
             </div>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                <Avatar>
+              <div key={comment.id} className="flex gap-4 p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage src={`https://picsum.photos/seed/${comment.user_email}/40/40`} />
                   <AvatarFallback>{comment.user_email.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">{comment.user_email}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="font-semibold text-sm">{comment.user_email}</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">
                         {new Date(comment.created_at).toLocaleDateString()}
                       </p>
                       {isAdmin && (
@@ -424,14 +564,14 @@ export default function StoryDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
                   </div>
-                  <p className="text-foreground/80 mt-1">{comment.comment_text}</p>
+                  <p className="text-sm text-foreground/80">{comment.comment_text}</p>
                 </div>
               </div>
             ))
