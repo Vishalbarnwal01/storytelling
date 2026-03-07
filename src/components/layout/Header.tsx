@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 
 interface User {
   id: number;
@@ -63,7 +64,7 @@ export default function Header() {
         {/* Logo - Left */}
         <Link href="/" className="flex items-center space-x-2 shrink-0">
           <Headphones className="h-6 w-6 text-accent" />
-          <span className="font-bold font-headline text-lg sm:text-xl hidden sm:inline">
+          <span className="font-bold font-headline text-lg sm:text-xl">
             Kahaniwaala
           </span>
         </Link>
@@ -134,80 +135,92 @@ export default function Header() {
           </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+              >
+                <Menu size={20} />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetTitle>Menu</SheetTitle>
+              <div className="space-y-6 py-6">
+                {/* Navigation Links */}
+                <nav className="flex flex-col space-y-4">
+                  <Link 
+                    href="/" 
+                    className="text-foreground hover:text-accent transition-colors text-lg font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Home
+                  </Link>
+                  <Link 
+                    href="/explore" 
+                    className="text-foreground hover:text-accent transition-colors text-lg font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Explore
+                  </Link>
+                </nav>
+
+                <div className="border-t border-border/40 pt-6">
+                  {isUserLoading ? (
+                    <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+                  ) : user ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 pb-4 border-b border-border/40">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>
+                            {user.email[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <Link 
+                        href="/upload" 
+                        className="flex items-center text-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Upload className="mr-3 h-5 w-5" />
+                        <span className="font-medium">Upload Song</span>
+                      </Link>
+                      <Link 
+                        href="/dashboard" 
+                        className="flex items-center text-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <BarChart3 className="mr-3 h-5 w-5" />
+                        <span className="font-medium">My Dashboard</span>
+                      </Link>
+                      <button 
+                        onClick={() => {
+                          handleSignOut();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center text-foreground hover:text-accent transition-colors w-full"
+                      >
+                        <LogOut className="mr-3 h-5 w-5" />
+                        <span className="font-medium">Log out</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <Button asChild className="w-full" size="lg">
+                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-border/40 bg-background">
-          <div className="container py-4 space-y-4">
-            <nav className="flex flex-col space-y-3">
-              <Link 
-                href="/" 
-                className="text-foreground/70 hover:text-foreground transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                href="/explore" 
-                className="text-foreground/70 hover:text-foreground transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Explore
-              </Link>
-            </nav>
 
-            <div className="border-t border-border/40 pt-4">
-              {isUserLoading ? (
-                <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
-              ) : user ? (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground">{user.email}</p>
-                  <Link 
-                    href="/upload" 
-                    className="flex items-center text-foreground/70 hover:text-foreground transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Song
-                  </Link>
-                  <Link 
-                    href="/dashboard" 
-                    className="flex items-center text-foreground/70 hover:text-foreground transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    My Dashboard
-                  </Link>
-                  <button 
-                    onClick={() => {
-                      handleSignOut();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center text-foreground/70 hover:text-foreground transition-colors w-full"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </button>
-                </div>
-              ) : (
-                <Button asChild className="w-full">
-                  <Link href="/login">Login</Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

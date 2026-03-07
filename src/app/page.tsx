@@ -110,7 +110,7 @@ export default function Home() {
                 </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {featuredStories.map((story) => (
                   <StoryCard key={story.id} story={story} />
                 ))}
@@ -159,7 +159,7 @@ export default function Home() {
                 </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {trendingStories.map((story) => (
                   <StoryCard key={story.id} story={story} />
                 ))}

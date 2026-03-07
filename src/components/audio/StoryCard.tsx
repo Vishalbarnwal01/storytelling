@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Play, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface StoryCardProps {
@@ -15,8 +16,40 @@ interface StoryCardProps {
 
 export default function StoryCard({ story }: StoryCardProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(story.likes);
   const [duration, setDuration] = useState(story.duration || '00:00');
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Load current user
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Fetch like status when component mounts or user changes
+  useEffect(() => {
+    fetchLikeStatus();
+  }, [currentUser, story.id]);
+
+  const fetchLikeStatus = async () => {
+    try {
+      const response = await fetch(
+        `/api/likes?songId=${story.id}&userId=${currentUser?.id || ''}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setLikeCount(data.likeCount);
+        setIsLiked(data.userHasLiked || false);
+      }
+    } catch (error) {
+      console.error('Error fetching like status:', error);
+    }
+  };
 
   // Calculate duration from audio file
   useEffect(() => {
@@ -38,10 +71,93 @@ export default function StoryCard({ story }: StoryCardProps) {
     }
   }, [story.audioUrl]);
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
+
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'Login first for like',
+      });
+      router.push('/login');
+      return;
+    }
+
+    setIsLikeLoading(true);
+
+    try {
+      if (isLiked) {
+        // Unlike
+        const response = await fetch('/api/likes/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            songId: story.id,
+            userId: currentUser.id,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsLiked(false);
+          setLikeCount(data.likeCount);
+          toast({
+            title: 'Success',
+            description: 'Like removed',
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to remove like',
+          });
+        }
+      } else {
+        // Like
+        const response = await fetch('/api/likes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            songId: story.id,
+            userId: currentUser.id,
+            userEmail: currentUser.email,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsLiked(true);
+          setLikeCount(data.likeCount);
+          toast({
+            title: 'Success',
+            description: 'Story liked!',
+          });
+        } else if (response.status === 409) {
+          toast({
+            variant: 'destructive',
+            title: 'Already Liked',
+            description: 'You already liked this story',
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to like story',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update like',
+      });
+    } finally {
+      setIsLikeLoading(false);
+    }
   };
 
   const handlePlay = (e: React.MouseEvent) => {
@@ -96,7 +212,10 @@ export default function StoryCard({ story }: StoryCardProps) {
             {/* Engagement Stats */}
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1 cursor-pointer" onClick={handleLike}>
+                <div 
+                  className="flex items-center space-x-1 cursor-pointer hover:opacity-70 transition-opacity" 
+                  onClick={handleLike}
+                >
                   <Heart
                     size={14}
                     className={cn(
@@ -104,7 +223,7 @@ export default function StoryCard({ story }: StoryCardProps) {
                       isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
                     )}
                   />
-                  <span className="text-xs text-muted-foreground">{story.likes + (isLiked ? 1 : 0)}</span>
+                  <span className="text-xs text-muted-foreground">{likeCount}</span>
                 </div>
                 
                 <div className="flex items-center space-x-1">

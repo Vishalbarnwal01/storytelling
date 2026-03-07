@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import AudioPlayer from '@/components/audio/AudioPlayer';
 import { 
   Shield, 
   Users, 
@@ -56,6 +58,7 @@ interface Story {
   likes: number;
   createdAt: string;
   thumbnailPath: string;
+  audioPath: string;
 }
 
 interface AdminUser {
@@ -72,6 +75,8 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
   
   // Upload form state
   const [uploadTitle, setUploadTitle] = useState('');
@@ -127,6 +132,7 @@ export default function AdminPage() {
 
   const handleApproveStory = async (storyId: number) => {
     try {
+      setIsApproving(true);
       const response = await fetch('/api/admin/stories/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,6 +146,7 @@ export default function AdminPage() {
         });
         // Update local state
         setStories(stories.map(s => s.id === storyId ? { ...s, status: 'approved' } : s));
+        setSelectedStory(null);
       } else {
         toast({
           variant: 'destructive',
@@ -154,11 +161,14 @@ export default function AdminPage() {
         title: 'Error',
         description: 'Failed to approve story',
       });
+    } finally {
+      setIsApproving(false);
     }
   };
 
   const handleRejectStory = async (storyId: number) => {
     try {
+      setIsApproving(true);
       const response = await fetch('/api/admin/stories/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,6 +181,7 @@ export default function AdminPage() {
           description: 'Story rejected',
         });
         setStories(stories.map(s => s.id === storyId ? { ...s, status: 'rejected' } : s));
+        setSelectedStory(null);
       } else {
         toast({
           variant: 'destructive',
@@ -185,6 +196,8 @@ export default function AdminPage() {
         title: 'Error',
         description: 'Failed to reject story',
       });
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -400,13 +413,14 @@ export default function AdminPage() {
                   {stories.map((story) => (
                     <div 
                       key={story.id} 
-                      className="border rounded-lg p-4 space-y-3"
+                      className="border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-accent/5 transition-colors"
+                      onClick={() => setSelectedStory(story)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{story.title}</h3>
                           <p className="text-sm text-muted-foreground">{story.userEmail}</p>
-                          <p className="text-sm mt-2">{story.description}</p>
+                          <p className="text-sm mt-2 line-clamp-2">{story.description}</p>
                         </div>
                         <div className="ml-4">
                           {story.thumbnailPath && (
@@ -433,26 +447,6 @@ export default function AdminPage() {
                         </div>
                         <div className="flex gap-2 items-center">
                           {getStatusBadge(story.status)}
-                          {story.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() => handleApproveStory(story.id)}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => handleRejectStory(story.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -657,6 +651,123 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Story Detail Modal */}
+      <Dialog open={!!selectedStory} onOpenChange={(open) => !open && setSelectedStory(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedStory && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedStory.title}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Thumbnail */}
+                {selectedStory.thumbnailPath && (
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={`/uploads/${selectedStory.thumbnailPath}`}
+                      alt={selectedStory.title}
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+
+                {/* Creator Info */}
+                <div className="space-y-2 p-4 bg-accent/5 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Creator Email</p>
+                  <p className="font-semibold text-lg">{selectedStory.userEmail}</p>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Description</Label>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {selectedStory.description}
+                  </p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-accent/5 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Created</p>
+                    <p className="font-semibold text-sm">
+                      {new Date(selectedStory.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-accent/5 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Views</p>
+                    <p className="font-semibold text-sm">👁️ {selectedStory.views}</p>
+                  </div>
+                  <div className="p-3 bg-accent/5 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Likes</p>
+                    <p className="font-semibold text-sm">❤️ {selectedStory.likes}</p>
+                  </div>
+                  <div className="p-3 bg-accent/5 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <div className="mt-2">
+                      {getStatusBadge(selectedStory.status)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audio Player */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Play Audio</Label>
+                  <div className="bg-accent/5 p-4 rounded-lg">
+                    <AudioPlayer audioUrl={`/uploads/${selectedStory.audioPath}`} />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {selectedStory.status === 'pending' && (
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedStory(null)}
+                      disabled={isApproving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleRejectStory(selectedStory.id)}
+                      disabled={isApproving}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => handleApproveStory(selectedStory.id)}
+                      disabled={isApproving}
+                    >
+                      {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <Check className="h-4 w-4 mr-2" />
+                      Approve
+                    </Button>
+                  </DialogFooter>
+                )}
+
+                {selectedStory.status !== 'pending' && (
+                  <div className="flex items-center justify-between p-4 bg-accent/5 rounded-lg">
+                    <span className="text-sm font-medium">
+                      Status: {selectedStory.status.charAt(0).toUpperCase() + selectedStory.status.slice(1)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedStory(null)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

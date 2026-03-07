@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Clock, MessageCircle, User, Trash2, Loader2 } from 'lucide-react';
+import { Clock, MessageCircle, Heart, User, Trash2, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import AudioPlayer from '@/components/audio/AudioPlayer';
@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface Story {
   id: number;
@@ -47,6 +48,9 @@ export default function StoryDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -65,9 +69,10 @@ export default function StoryDetailPage() {
   useEffect(() => {
     const fetchStoryAndComments = async () => {
       try {
-        const [storyRes, commentsRes] = await Promise.all([
+        const [storyRes, commentsRes, likesRes] = await Promise.all([
           fetch(`/api/story/${storyId}`),
           fetch(`/api/story/${storyId}/comments`),
+          fetch(`/api/likes?songId=${storyId}&userId=${currentUser?.id || ''}`),
         ]);
 
         if (storyRes.ok) {
@@ -78,6 +83,12 @@ export default function StoryDetailPage() {
         if (commentsRes.ok) {
           const commentsData = await commentsRes.json();
           setComments(commentsData.comments || []);
+        }
+
+        if (likesRes.ok) {
+          const likesData = await likesRes.json();
+          setLikeCount(likesData.likeCount);
+          setIsLiked(likesData.userHasLiked);
         }
       } catch (error) {
         console.error('Error fetching story:', error);
@@ -92,7 +103,7 @@ export default function StoryDetailPage() {
     };
 
     fetchStoryAndComments();
-  }, [storyId, toast]);
+  }, [storyId, currentUser, toast]);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,8 +111,8 @@ export default function StoryDetailPage() {
     if (!currentUser) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Please log in to comment',
+        title: 'Login Required',
+        description: 'Login first for comment',
       });
       router.push('/login');
       return;
@@ -193,6 +204,92 @@ export default function StoryDetailPage() {
     }
   };
 
+  const handleLike = async () => {
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'Login first for like',
+      });
+      router.push('/login');
+      return;
+    }
+
+    setIsLikeLoading(true);
+
+    try {
+      if (isLiked) {
+        // Unlike
+        const response = await fetch('/api/likes/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            songId: storyId,
+            userId: currentUser.id,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsLiked(false);
+          setLikeCount(data.likeCount);
+          toast({
+            title: 'Success',
+            description: 'Like removed',
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to remove like',
+          });
+        }
+      } else {
+        // Like
+        const response = await fetch('/api/likes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            songId: storyId,
+            userId: currentUser.id,
+            userEmail: currentUser.email,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsLiked(true);
+          setLikeCount(data.likeCount);
+          toast({
+            title: 'Success',
+            description: 'Story liked!',
+          });
+        } else if (response.status === 409) {
+          toast({
+            variant: 'destructive',
+            title: 'Already Liked',
+            description: 'You already liked this story',
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to like story',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update like',
+      });
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto max-w-4xl py-8 sm:py-12">
@@ -247,6 +344,29 @@ export default function StoryDetailPage() {
 
           <div className="mt-4">
             <p className="text-sm text-muted-foreground">{story.description}</p>
+          </div>
+
+          {/* Likes and Comments Stats */}
+          <div className="mt-6 flex items-center gap-6">
+            <button
+              onClick={handleLike}
+              disabled={isLikeLoading}
+              className="flex items-center space-x-2 hover:opacity-70 transition-opacity disabled:opacity-50"
+            >
+              <Heart
+                size={20}
+                className={cn(
+                  'transition-colors',
+                  isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
+                )}
+              />
+              <span className="font-semibold">{likeCount} {likeCount === 1 ? 'Like' : 'Likes'}</span>
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <MessageCircle size={20} className="text-muted-foreground" />
+              <span className="font-semibold">{comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}</span>
+            </div>
           </div>
         </div>
       </div>

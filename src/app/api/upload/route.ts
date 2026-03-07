@@ -23,10 +23,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file types
-    if (!audioFile.type.startsWith('audio/')) {
+    // Max file size: 30MB
+    const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB in bytes
+
+    // Allowed audio formats
+    const ALLOWED_AUDIO_TYPES = [
+      'audio/mpeg',        // MP3
+      'audio/wav',         // WAV
+      'audio/flac',        // FLAC
+      'audio/aac',         // AAC
+      'audio/ogg',         // OGG
+      'audio/mp4',         // M4A
+      'audio/x-m4a',       // M4A
+      'audio/aiff',        // AIFF
+      'audio/x-aiff',      // AIFF
+      'audio/x-ms-wma',    // WMA
+      'audio/amr',         // AMR
+    ];
+
+    // Validate audio file type
+    if (!ALLOWED_AUDIO_TYPES.includes(audioFile.type)) {
       return NextResponse.json(
-        { error: 'Invalid audio file type' },
+        { error: 'Audio format not supported. Allowed formats: MP3, WAV, FLAC, AAC, OGG, M4A, AIFF, ALAC, WMA, AMR' },
+        { status: 400 }
+      );
+    }
+
+    // Validate audio file size
+    if (audioFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'Audio file size must be less than 30MB' },
         { status: 400 }
       );
     }
