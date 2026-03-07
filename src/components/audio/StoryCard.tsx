@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAudio } from '@/contexts/AudioContext';
 
 interface StoryCardProps {
   story: Story;
@@ -22,6 +23,7 @@ export default function StoryCard({ story }: StoryCardProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const { playSong } = useAudio();
 
   // Load current user
   useEffect(() => {
@@ -163,7 +165,18 @@ export default function StoryCard({ story }: StoryCardProps) {
   const handlePlay = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Play functionality can be added here
+    
+    // Create song object from story data
+    const song = {
+      id: story.id,
+      title: story.title,
+      author: story.author,
+      coverImage: story.coverImage,
+      audioUrl: story.audioUrl,
+    };
+    
+    // Play the song
+    playSong(song);
   };
 
   return (

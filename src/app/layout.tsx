@@ -3,6 +3,8 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
+import GlobalAudioPlayer from '@/components/audio/GlobalAudioPlayer';
+import { AudioProvider } from '@/contexts/AudioContext';
 
 export const metadata: Metadata = {
   title: 'Kahaniwaala',
@@ -25,11 +27,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-        </div>
-        <Toaster />
+        <AudioProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+          </div>
+          <GlobalAudioPlayer />
+          <Toaster />
+        </AudioProvider>
       </body>
     </html>
   );

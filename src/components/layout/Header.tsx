@@ -27,16 +27,25 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Load user from localStorage
+   
+    const adminSession = localStorage.getItem('adminSession');
+    if (adminSession) {
+      setIsAdmin(true);
+      setIsUserLoading(false);
+      return; 
+    }
+
+   
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setIsUserLoading(false);
 
-    // Listen for custom user update events
+    
     const handleUserUpdate = () => {
       const updatedUser = localStorage.getItem('user');
       setUser(updatedUser ? JSON.parse(updatedUser) : null);
@@ -57,6 +66,11 @@ export default function Header() {
     setUser(null);
     router.push('/login');
   };
+
+  // Don't render header for admin pages
+  if (isAdmin) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
