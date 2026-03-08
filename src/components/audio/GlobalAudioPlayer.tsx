@@ -24,22 +24,38 @@ export default function GlobalAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (currentAudio) {
-      setShowPlayer(true);
+    if (currentAudio && audioRef.current) {
+      // Reset time when audio source changes
+      setCurrentTime(0);
+      audioRef.current.src = currentAudio.audioUrl;
+      audioRef.current.load();
+      
+      // Auto-play if isPlaying is true
+      if (isPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Error playing audio:", error);
+          });
+        }
+      }
     }
-  }, [currentAudio]);
+  }, [currentAudio, isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.error("Error playing audio:", error);
-        });
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error("Error playing audio:", error);
+          });
+        }
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, currentAudio]);
+  }, [isPlaying]);
   
   useEffect(() => {
     if (audioRef.current) {
@@ -92,6 +108,13 @@ export default function GlobalAudioPlayer() {
     setShowPlayer(false);
   };
   
+  // Auto show player when audio is loaded
+  useEffect(() => {
+    if (currentAudio) {
+      setShowPlayer(true);
+    }
+  }, [currentAudio]);
+
   if (!currentAudio) return null;
 
   return (
@@ -204,6 +227,7 @@ export default function GlobalAudioPlayer() {
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={nextTrack}
+            crossOrigin="anonymous"
           />
         </motion.div>
       )}

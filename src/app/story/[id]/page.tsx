@@ -22,7 +22,7 @@ interface Story {
   audioUrl?: string;
   thumbnailPath: string;
   coverImage?: string;
-  creatorEmail: string;
+  creatorName: string;
   author?: string;
   status: string;
   views: number;
@@ -57,6 +57,7 @@ export default function StoryDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [duration, setDuration] = useState('00:00');
+  const [allStories, setAllStories] = useState<any[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -73,10 +74,11 @@ export default function StoryDetailPage() {
   useEffect(() => {
     const fetchStoryAndComments = async () => {
       try {
-        const [storyRes, commentsRes, likesRes] = await Promise.all([
+        const [storyRes, commentsRes, likesRes, storiesRes] = await Promise.all([
           fetch(`/api/story/${storyId}`),
           fetch(`/api/story/${storyId}/comments`),
           fetch(`/api/likes?songId=${storyId}&userId=${currentUser?.id || ''}`),
+          fetch('/api/stories'),
         ]);
 
         if (storyRes.ok) {
@@ -111,6 +113,18 @@ export default function StoryDetailPage() {
           const likesData = await likesRes.json();
           setLikeCount(likesData.likeCount);
           setIsLiked(likesData.userHasLiked);
+        }
+
+        if (storiesRes.ok) {
+          const storiesData = await storiesRes.json();
+          const transformedStories = (storiesData.stories || []).map((s: any) => ({
+            id: s.id.toString(),
+            title: s.title,
+            author: s.creator_name || 'John',
+            coverImage: s.thumbnail_path ? `/uploads/${s.thumbnail_path}` : '/placeholder.jpg',
+            audioUrl: s.audio_path ? `/uploads/${s.audio_path}` : '',
+          }));
+          setAllStories(transformedStories);
         }
       } catch (error) {
         console.error('Error fetching story:', error);
@@ -316,7 +330,7 @@ export default function StoryDetailPage() {
     const song = {
       id: story.id,
       title: story.title,
-      author: story.creatorEmail,
+      author: story.creatorName || 'John',
       coverImage: story.coverImage || `/uploads/${story.thumbnailPath}`,
       audioUrl: audioUrl,
     };
@@ -324,7 +338,12 @@ export default function StoryDetailPage() {
     if (currentAudio?.id === story.id) {
       togglePlayPause();
     } else {
-      playSong(song);
+      // Pass all stories as playlist if available
+      if (allStories.length > 0) {
+        playSong(song, allStories);
+      } else {
+        playSong(song);
+      }
     }
   };
 
@@ -403,11 +422,11 @@ export default function StoryDetailPage() {
           {/* Author Section */}
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={`https://picsum.photos/seed/${story.creatorEmail}/48/48`} alt={story.creatorEmail} />
-              <AvatarFallback>{story.creatorEmail.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={`https://picsum.photos/seed/${story.creatorName}/48/48`} alt={story.creatorName} />
+              <AvatarFallback>{story.creatorName ? story.creatorName.charAt(0).toUpperCase() : 'J'}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold text-base">{story.creatorEmail}</p>
+              <p className="font-semibold text-base">{story.creatorName || 'John'}</p>
               <p className="text-xs text-muted-foreground">Storyteller</p>
             </div>
           </div>

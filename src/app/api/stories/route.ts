@@ -6,7 +6,7 @@ export async function GET() {
 
     const [stories] = await connection.query(
       `SELECT s.id, s.title, s.user_id, s.thumbnail_path, s.audio_path, 
-              s.description, s.likes, s.views, s.created_at, u.email as creator_email
+              s.description, s.likes, s.views, s.created_at, u.name as creator_name
        FROM songs s
        LEFT JOIN users u ON s.user_id = u.id
        WHERE s.status = 'approved'

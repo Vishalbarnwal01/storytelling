@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Headphones, LogOut, Upload, BarChart3, Menu, X } from 'lucide-react';
 
@@ -24,28 +24,25 @@ interface User {
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Hide header on admin and kwadmin pages
+  const isAdminPage = pathname?.startsWith('/kwadmin') || pathname?.startsWith('/admin-login');
+  
+  if (isAdminPage) {
+    return null;
+  }
 
   useEffect(() => {
-   
-    const adminSession = localStorage.getItem('adminSession');
-    if (adminSession) {
-      setIsAdmin(true);
-      setIsUserLoading(false);
-      return; 
-    }
-
-   
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setIsUserLoading(false);
 
-    
     const handleUserUpdate = () => {
       const updatedUser = localStorage.getItem('user');
       setUser(updatedUser ? JSON.parse(updatedUser) : null);
@@ -60,21 +57,16 @@ export default function Header() {
     };
   }, []);
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     localStorage.removeItem('user');
     window.dispatchEvent(new Event('userLoggedOut'));
     setUser(null);
     router.push('/login');
   };
 
-  // Don't render header for admin pages
-  if (isAdmin) {
-    return null;
-  }
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background supports-[backdrop-filter]:bg-background/95 backdrop-blur-md">
+      <div className="container mx-auto flex h-14 items-center justify-between px-4 md:px-6">
         {/* Logo - Left */}
         <Link href="/" className="flex items-center space-x-2 shrink-0">
           <Headphones className="h-6 w-6 text-accent" />

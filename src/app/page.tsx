@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Play, Headphones, Upload, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StoryCard from '@/components/audio/StoryCard';
@@ -11,6 +12,23 @@ import type { Story } from '@/lib/types';
 export default function Home() {
   const [allStories, setAllStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleShareStory = () => {
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+    router.push('/upload');
+  };
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -22,7 +40,7 @@ export default function Home() {
           const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
             id: story.id.toString(),
             title: story.title,
-            author: story.creator_email || 'Unknown',
+            author: story.creator_name || 'John',
             coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
             imageHint: 'story cover',
             audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
@@ -64,16 +82,14 @@ export default function Home() {
             
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg">
-                <Link href="/story">
+                <Link href="/explore">
                   <Play size={18} className="mr-2" />
                   Explore Stories
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/upload">
-                  <Upload size={18} className="mr-2" />
-                  Share Your Story
-                </Link>
+              <Button onClick={handleShareStory} variant="outline" size="lg">
+                <Upload size={18} className="mr-2" />
+                Share Your Story
               </Button>
             </div>
           </div>
@@ -112,7 +128,7 @@ export default function Home() {
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {featuredStories.map((story) => (
-                  <StoryCard key={story.id} story={story} />
+                  <StoryCard key={story.id} story={story} playlist={allStories} />
                 ))}
               </div>
             </section>
@@ -161,7 +177,7 @@ export default function Home() {
               
              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {trendingStories.map((story) => (
-                  <StoryCard key={story.id} story={story} />
+                  <StoryCard key={story.id} story={story} playlist={allStories} />
                 ))}
               </div>
             </section>
@@ -172,8 +188,8 @@ export default function Home() {
             <div className="relative z-10 text-center space-y-6 max-w-2xl mx-auto">
               <h2 className="text-3xl font-bold">Ready to Share Your Story?</h2>
               <p className="text-white/80">Join thousands of storytellers who are sharing their voices with the world.</p>
-              <Button asChild size="lg" variant="secondary">
-                <Link href="/upload">Get Started</Link>
+              <Button onClick={handleShareStory} size="lg" variant="secondary">
+                Get Started
               </Button>
             </div>
             

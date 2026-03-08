@@ -11,7 +11,7 @@ export const db = mysql.createPool({
 });
 
 
-export async function signupUser(email: string, hashedPassword: string) {
+export async function signupUser(email: string, name: string, hashedPassword: string) {
   try {
     const connection = await db.getConnection();
     
@@ -28,9 +28,10 @@ export async function signupUser(email: string, hashedPassword: string) {
 
  
     const [result] = await connection.query(
-      "INSERT INTO users (email, password) VALUES (?, ?)",
-      [email, hashedPassword]
+      "INSERT INTO users (email, name, password) VALUES (?, ?, ?)",
+      [email, name, hashedPassword]
     );
+
 
     connection.release();
     return { success: true, userId: (result as any).insertId };

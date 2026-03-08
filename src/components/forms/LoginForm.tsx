@@ -28,6 +28,7 @@ const signInSchema = z.object({
 
 const signUpSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
+  name: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
   password: z
     .string()
     .min(6, { message: 'Password must be at least 6 characters.' }),
@@ -49,19 +50,19 @@ export default function LoginForm() {
   const [activeTab, setActiveTab] = useState('signin');
   const router = useRouter();
 
-  const formSignIn = useForm<z.infer<typeof signInSchema>>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: '', password: '' },
-  });
+  // Sign In form state
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+  const [signInErrors, setSignInErrors] = useState<{ [key: string]: string }>({});
 
-  const formSignUp = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { email: '', password: '' },
-  });
+  // Sign Up form state
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpName, setSignUpName] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpErrors, setSignUpErrors] = useState<{ [key: string]: string }>({});
 
   const handleGoogleAuth = async (credentialResponse: any) => {
     try {
-      // Decode the JWT token to get user info
       const base64Url = credentialResponse.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
@@ -72,7 +73,6 @@ export default function LoginForm() {
       
       const { email, name, sub: googleId } = decodedToken;
 
-      // Call API to handle Google auth
       const response = await fetch('/api/auth/google-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,7 +90,6 @@ export default function LoginForm() {
         return;
       }
 
-      // Store user data and redirect
       localStorage.setItem('user', JSON.stringify(data.user));
       window.dispatchEvent(new Event('userLoggedIn'));
       toast({ title: 'Signed in with Google successfully!' });
@@ -118,7 +117,6 @@ export default function LoginForm() {
               client_id: '377169052223-3pp8rooi3uiln39kqguv8qbmku84iok8.apps.googleusercontent.com',
               callback: handleGoogleAuth,
             });
-            // Render button in the container
             const googleButtonContainer = document.getElementById('google-signin-button');
             if (googleButtonContainer) {
               window.google.accounts.id.renderButton(googleButtonContainer, {
@@ -133,21 +131,33 @@ export default function LoginForm() {
       document.body.appendChild(script);
     };
 
-    // Only load script if not already loaded
     if (!window.google) {
       loadGoogleScript();
     }
-    // Script loads only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onSignIn(values: z.infer<typeof signInSchema>) {
+  async function onSignIn(e: React.FormEvent) {
+    e.preventDefault();
     setIsLoading(true);
+    setSignInErrors({});
+
+    // Validation
+    const errors: { [key: string]: string } = {};
+    if (!signInEmail) errors.email = 'Email is required';
+    if (!signInEmail.includes('@')) errors.email = 'Please enter a valid email';
+    if (!signInPassword) errors.password = 'Password is required';
+
+    if (Object.keys(errors).length > 0) {
+      setSignInErrors(errors);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ email: signInEmail, password: signInPassword }),
       });
 
       const data = await response.json();
@@ -161,10 +171,10 @@ export default function LoginForm() {
         return;
       }
 
-    
       localStorage.setItem('user', JSON.stringify(data.user));
       window.dispatchEvent(new Event('userLoggedIn'));
-      formSignIn.reset();
+      setSignInEmail('');
+      setSignInPassword('');
       toast({ title: 'Signed in successfully!' });
       router.push('/');
     } catch (error: any) {
@@ -178,13 +188,29 @@ export default function LoginForm() {
     }
   }
 
-  async function onSignUp(values: z.infer<typeof signUpSchema>) {
+  async function onSignUp(e: React.FormEvent) {
+    e.preventDefault();
     setIsLoading(true);
+    setSignUpErrors({});
+
+    // Validation
+    const errors: { [key: string]: string } = {};
+    if (!signUpEmail) errors.email = 'Email is required';
+    if (!signUpEmail.includes('@')) errors.email = 'Please enter a valid email';
+    if (!signUpName || signUpName.length < 2) errors.name = 'Full name must be at least 2 characters';
+    if (!signUpPassword || signUpPassword.length < 6) errors.password = 'Password must be at least 6 characters';
+
+    if (Object.keys(errors).length > 0) {
+      setSignUpErrors(errors);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ email: signUpEmail, name: signUpName, password: signUpPassword }),
       });
 
       const data = await response.json();
@@ -204,13 +230,15 @@ export default function LoginForm() {
       const loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ email: signUpEmail, password: signUpPassword }),
       });
 
       const loginData = await loginResponse.json();
       localStorage.setItem('user', JSON.stringify(loginData.user));
       window.dispatchEvent(new Event('userLoggedIn'));
-      formSignUp.reset();
+      setSignUpEmail('');
+      setSignUpName('');
+      setSignUpPassword('');
       
       router.push('/');
     } catch (error: any) {    
@@ -223,83 +251,6 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   }
-  
-  const AuthForm = ({ isSignUp = false }: { isSignUp?: boolean}) => {
-    const form = isSignUp ? formSignUp : formSignIn;
-    const onSubmit = isSignUp ? onSignUp : onSignIn;
-
-    return (
-    <Card>
-      <CardContent className="pt-6">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      autoComplete="off"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••"
-                      autoComplete="off"
-                      spellCheck="false"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSignUp ? 'Create Account' : 'Sign In'}
-            </Button>
-          </form>
-        </Form>
-
-        <div className="mt-4">
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-zinc-500">Or continue with</span>
-            </div>
-          </div>
-
-          <div 
-            id="google-signin-button" 
-            className="w-full flex justify-center"
-            style={{ display: 'flex', justifyContent: 'center' }}
-          />
-        </div>
-      </CardContent>
-    </Card>
-    );
-  };
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -307,11 +258,132 @@ export default function LoginForm() {
         <TabsTrigger value="signin">Sign In</TabsTrigger>
         <TabsTrigger value="signup">Sign Up</TabsTrigger>
       </TabsList>
+      
       <TabsContent value="signin">
-        <AuthForm />
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={onSignIn} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="off"
+                  value={signInEmail}
+                  onChange={(e) => setSignInEmail(e.target.value)}
+                  className={signInErrors.email ? 'border-red-500' : ''}
+                />
+                {signInErrors.email && <p className="text-xs text-red-500 mt-1">{signInErrors.email}</p>}
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Password</label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  spellCheck="false"
+                  value={signInPassword}
+                  onChange={(e) => setSignInPassword(e.target.value)}
+                  className={signInErrors.password ? 'border-red-500' : ''}
+                />
+                {signInErrors.password && <p className="text-xs text-red-500 mt-1">{signInErrors.password}</p>}
+              </div>
+
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign In
+              </Button>
+            </form>
+
+            <div className="mt-4">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-zinc-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div 
+                id="google-signin-button" 
+                className="w-full flex justify-center"
+                style={{ display: 'flex', justifyContent: 'center' }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
+
       <TabsContent value="signup">
-        <AuthForm isSignUp />
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={onSignUp} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="off"
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  className={signUpErrors.email ? 'border-red-500' : ''}
+                />
+                {signUpErrors.email && <p className="text-xs text-red-500 mt-1">{signUpErrors.email}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Full Name</label>
+                <Input
+                  type="text"
+                  placeholder="Your full name"
+                  autoComplete="off"
+                  value={signUpName}
+                  onChange={(e) => setSignUpName(e.target.value)}
+                  className={signUpErrors.name ? 'border-red-500' : ''}
+                />
+                {signUpErrors.name && <p className="text-xs text-red-500 mt-1">{signUpErrors.name}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Password</label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  spellCheck="false"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  className={signUpErrors.password ? 'border-red-500' : ''}
+                />
+                {signUpErrors.password && <p className="text-xs text-red-500 mt-1">{signUpErrors.password}</p>}
+              </div>
+
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+            </form>
+
+            <div className="mt-4">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-zinc-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div 
+                id="google-signin-button" 
+                className="w-full flex justify-center"
+                style={{ display: 'flex', justifyContent: 'center' }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
     </Tabs>
   );

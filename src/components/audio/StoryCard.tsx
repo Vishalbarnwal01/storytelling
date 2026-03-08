@@ -13,9 +13,10 @@ import { useAudio } from '@/contexts/AudioContext';
 
 interface StoryCardProps {
   story: Story;
+  playlist?: Story[];
 }
 
-export default function StoryCard({ story }: StoryCardProps) {
+export default function StoryCard({ story, playlist }: StoryCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story.likes);
   const [duration, setDuration] = useState(story.duration || '00:00');
@@ -166,6 +167,12 @@ export default function StoryCard({ story }: StoryCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Check if user is logged in
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+    
    
     const song = {
       id: story.id,
@@ -175,8 +182,12 @@ export default function StoryCard({ story }: StoryCardProps) {
       audioUrl: story.audioUrl,
     };
     
-   
-    playSong(song);
+    // Pass playlist if available, so next/previous buttons work
+    if (playlist && playlist.length > 0) {
+      playSong(song, playlist);
+    } else {
+      playSong(song);
+    }
   };
 
   return (
@@ -220,7 +231,7 @@ export default function StoryCard({ story }: StoryCardProps) {
             </h3>
             
             {/* Author */}
-            <p className="text-sm text-muted-foreground mt-1">{story.author}</p>
+            <p className="text-sm text-muted-foreground mt-1">{story.author || 'John'}</p>
             
             {/* Engagement Stats */}
             <div className="mt-4 flex items-center justify-between">
@@ -245,7 +256,7 @@ export default function StoryCard({ story }: StoryCardProps) {
                 </div>
               </div>
               
-              <span className="text-xs text-muted-foreground">2 years ago</span>
+              {/* <span className="text-xs text-muted-foreground">2min</span> */}
             </div>
           </div>
         </div>

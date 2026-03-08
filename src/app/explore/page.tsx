@@ -24,7 +24,7 @@ export default function ExplorePage() {
           const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
             id: story.id.toString(),
             title: story.title,
-            author: story.creator_email || 'Unknown',
+            author: story.creator_name || 'John',
             coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
             imageHint: 'story cover',
             audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
@@ -107,7 +107,7 @@ export default function ExplorePage() {
       ) : (
        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           {filteredStories.map((story) => (
-            <StoryCard key={story.id} story={story} />
+            <StoryCard key={story.id} story={story} playlist={filteredStories} />
           ))}
         </div>
       )}

@@ -10,7 +10,7 @@ export async function GET(
     const connection = await db.getConnection();
     
     const [songs] = await connection.query(
-      `SELECT s.*, u.email as creator_email FROM songs s 
+      `SELECT s.*, u.name as creator_name FROM songs s 
        LEFT JOIN users u ON s.user_id = u.id 
        WHERE s.id = ?`,
       [storyId]
@@ -30,7 +30,7 @@ export async function GET(
       description: story.description,
       audioPath: story.audio_path,
       thumbnailPath: story.thumbnail_path,
-      creatorEmail: story.creator_email,
+      creatorName: story.creator_name || 'John',
       status: story.status,
       views: story.views,
       likes: story.likes,
