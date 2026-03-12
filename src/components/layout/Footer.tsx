@@ -7,10 +7,12 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <Headphones className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">AudioVerse</span>
-            </Link>
+		<Link href="/" className="flex items-center space-x-2 shrink-0">
+        	  <Headphones className="h-6 w-6 text-accent" />
+         	  <span className="font-bold font-headline text-lg sm:text-xl">
+            Kahaniwaala
+          </span>
+        </Link>
             <p className="text-sm text-muted-foreground">
               Share and discover audio stories from around the world.
             </p>

@@ -33,7 +33,10 @@ export default function Home() {
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const response = await fetch('/api/stories');
+	const response = await fetch(`/api/stories?ts=${Date.now()}`, {
+ 		 cache: "no-store"
+	});	
+
         if (response.ok) {
           const data = await response.json();
           // Transform API data to Story interface
@@ -122,7 +125,7 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Featured Stories</h2>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/story">View All</Link>
+                  <Link href="/explore">View All</Link>
                 </Button>
               </div>
               
@@ -171,7 +174,7 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Trending Now</h2>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/story">View All</Link>
+                  <Link href="/explore">View All</Link>
                 </Button>
               </div>
               

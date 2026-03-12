@@ -53,10 +53,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
+const uploadsDir = '/root/uploads';
+
+if (!existsSync(uploadsDir)) {
+  await mkdir(uploadsDir, { recursive: true });
+}
 
     // Save audio file
     const audioBuffer = await audioFile.arrayBuffer();

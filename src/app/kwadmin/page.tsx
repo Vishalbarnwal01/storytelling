@@ -312,11 +312,17 @@ export default function AdminPage() {
       <div className="container py-6">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
+<Button
+  variant="ghost"
+  size="sm"
+  onClick={() => {
+    localStorage.removeItem("adminSession");
+    window.location.href = "/";
+  }}
+>
+  <ArrowLeft className="h-4 w-4" />
+  Logout
+</Button>
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-accent" />
             <h1 className="text-4xl font-bold">Admin Dashboard</h1>

@@ -199,6 +199,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
             <Image
               src={story.coverImage}
               alt={`Cover art for ${story.title}`}
+		unoptimized
               width={438}
               height={328}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
