@@ -10,6 +10,10 @@ export const db = mysql.createPool({
   queueLimit: 0,
 });
 
+;(db as any).on("error", (error: any) => {
+  console.error("MySQL pool error:", error);
+});
+
 export async function signupUser(email: string, name: string, hashedPassword: string) {
   try {
     const connection = await db.getConnection();
