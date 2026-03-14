@@ -271,6 +271,11 @@ export default function StoryDetailPage() {
             title: 'Success',
             description: 'Like removed',
           });
+          
+          // Emit event to update story cards
+          window.dispatchEvent(new CustomEvent('storyLikeChanged', {
+            detail: { storyId: Number(storyId), isLiked: false, likeCount: data.likeCount }
+          }));
         } else {
           toast({
             variant: 'destructive',
@@ -297,6 +302,11 @@ export default function StoryDetailPage() {
             title: 'Success',
             description: 'Story liked!',
           });
+          
+          // Emit event to update story cards
+          window.dispatchEvent(new CustomEvent('storyLikeChanged', {
+            detail: { storyId: Number(storyId), isLiked: true, likeCount: data.likeCount }
+          }));
         } else if (response.status === 409) {
           toast({
             variant: 'destructive',
@@ -324,6 +334,16 @@ export default function StoryDetailPage() {
   };
 
   const handlePlay = () => {
+    if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'Login first to play songs',
+      });
+      router.push('/login');
+      return;
+    }
+
     if (!story) return;
 
     const audioUrl = story.audioUrl || `/uploads/${story.audioPath}`;

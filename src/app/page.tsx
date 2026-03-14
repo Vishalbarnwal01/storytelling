@@ -71,47 +71,47 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 space-y-16 container mx-auto px-4 py-8 md:py-12">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/20 to-blue-500/20 py-16 px-6 md:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-              Share Your Voice, <br />
-              Tell Your Story
-            </h1>
-            
-            <p className="text-lg text-muted-foreground">
-              Join our community of storytellers and listeners. Upload your audio stories, discover new voices, and connect through the power of sound.
-            </p>
-            
-            <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg">
-                <Link href="/explore">
-                  <Play size={18} className="mr-2" />
-                  Explore Stories
-                </Link>
-              </Button>
-              <Button onClick={handleShareStory} variant="outline" size="lg">
-                <Upload size={18} className="mr-2" />
-                Share Your Story
-              </Button>
-            </div>
-          </div>
-          
-          <div className="relative hidden md:block">
-            <div className="relative z-10">
-              <img 
-                alt="Person recording audio" 
-                className="rounded-lg shadow-2xl w-full" 
-                src="https://images.unsplash.com/photo-1566581478686-a797f6dc37e2?w=500&h=500&fit=crop" 
-              />
-            </div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 rounded-full blur-3xl -z-10" />
-          </div>
-        </div>
-        
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
-      </section>
+     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/20 to-blue-500/20 py-16 px-6 md:px-12">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <div className="space-y-6">
+      <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+        Share Your Voice, <br />
+        Tell Your Story
+      </h1>
+      
+      <p className="text-lg text-muted-foreground">
+        Join our community of storytellers and listeners. Upload your audio stories, discover new voices, and connect through the power of sound.
+      </p>
+      
+      <div className="flex flex-wrap gap-4">
+        <Button asChild size="lg">
+          <Link href="/explore">
+            <Play size={18} className="mr-2" />
+            Explore Stories
+          </Link>
+        </Button>
+        <Button onClick={handleShareStory} variant="outline" size="lg">
+          <Upload size={18} className="mr-2" />
+          Share Your Story
+        </Button>
+      </div>
+    </div>
+    
+    <div className="relative hidden md:block">
+      <div className="relative z-10 aspect-video w-full max-w-[500px] mx-auto">
+        <img 
+          alt="Person recording audio" 
+          className="rounded-xl shadow-2xl w-full h-full object-cover" 
+          src="https://images.unsplash.com/photo-1566581478686-a797f6dc37e2?w=800&h=450&fit=crop" 
+        />
+      </div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-primary/20 rounded-full blur-3xl -z-10" />
+    </div>
+  </div>
+  
+  <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+  <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+</section>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -129,7 +129,7 @@ export default function Home() {
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {featuredStories.map((story) => (
                   <StoryCard key={story.id} story={story} playlist={allStories} />
                 ))}
@@ -178,7 +178,7 @@ export default function Home() {
                 </Button>
               </div>
               
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {trendingStories.map((story) => (
                   <StoryCard key={story.id} story={story} playlist={allStories} />
                 ))}

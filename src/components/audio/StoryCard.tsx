@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Story } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Play, Clock } from 'lucide-react';
+import { Heart, MessageCircle, Play, Clock, Pause } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -19,12 +19,16 @@ interface StoryCardProps {
 export default function StoryCard({ story, playlist }: StoryCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story.likes);
+  const [commentCount, setCommentCount] = useState(0);
   const [duration, setDuration] = useState(story.duration || '00:00');
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
   const router = useRouter();
-  const { playSong } = useAudio();
+  const { playSong, currentAudio, isPlaying, togglePlayPause } = useAudio();
+
+  // Check if this story is currently playing
+  const isCurrentlyPlaying = currentAudio?.id === Number(story.id) && isPlaying;
 
   // Load current user
   useEffect(() => {
@@ -36,8 +40,39 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
 
   // Fetch like status when component mounts or user changes
   useEffect(() => {
-    fetchLikeStatus();
+    if (currentUser) {
+      fetchLikeStatus();
+      fetchCommentCount();
+    }
   }, [currentUser, story.id]);
+
+  // Listen for like changes from detail page or other cards
+  useEffect(() => {
+    const handleLikeChange = (event: CustomEvent) => {
+      const { storyId, isLiked, likeCount } = event.detail;
+      const currentStoryId = typeof story.id === 'string' ? parseInt(story.id) : story.id;
+      
+      if (storyId === currentStoryId) {
+        setIsLiked(isLiked);
+        setLikeCount(likeCount);
+      }
+    };
+
+    // Also listen to global like change event to refresh like status
+    const handleGlobalLikeChange = () => {
+      if (currentUser) {
+        fetchLikeStatus();
+      }
+    };
+
+    window.addEventListener('storyLikeChanged', handleLikeChange as EventListener);
+    window.addEventListener('storyLikeChanged', handleGlobalLikeChange);
+    
+    return () => {
+      window.removeEventListener('storyLikeChanged', handleLikeChange as EventListener);
+      window.removeEventListener('storyLikeChanged', handleGlobalLikeChange);
+    };
+  }, [story.id, currentUser]);
 
   const fetchLikeStatus = async () => {
     try {
@@ -51,6 +86,18 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
       }
     } catch (error) {
       console.error('Error fetching like status:', error);
+    }
+  };
+
+  const fetchCommentCount = async () => {
+    try {
+      const response = await fetch(`/api/story/${story.id}/comments`);
+      if (response.ok) {
+        const data = await response.json();
+        setCommentCount(data.comments?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
     }
   };
 
@@ -110,6 +157,11 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
             title: 'Success',
             description: 'Like removed',
           });
+          
+          // Emit event to update other cards
+          window.dispatchEvent(new CustomEvent('storyLikeChanged', {
+            detail: { storyId: Number(story.id), isLiked: false, likeCount: data.likeCount }
+          }));
         } else {
           toast({
             variant: 'destructive',
@@ -137,6 +189,11 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
             title: 'Success',
             description: 'Story liked!',
           });
+          
+          // Emit event to update other cards
+          window.dispatchEvent(new CustomEvent('storyLikeChanged', {
+            detail: { storyId: Number(story.id), isLiked: true, likeCount: data.likeCount }
+          }));
         } else if (response.status === 409) {
           toast({
             variant: 'destructive',
@@ -169,13 +226,23 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
     
     // Check if user is logged in
     if (!currentUser) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'Login first to play songs',
+      });
       router.push('/login');
       return;
     }
     
-   
+    // If already playing this song, toggle pause/play
+    if (currentAudio?.id === Number(story.id)) {
+      togglePlayPause();
+      return;
+    }
+    
     const song = {
-      id: story.id,
+      id: Number(story.id),
       title: story.title,
       author: story.author,
       coverImage: story.coverImage,
@@ -184,7 +251,14 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
     
     // Pass playlist if available, so next/previous buttons work
     if (playlist && playlist.length > 0) {
-      playSong(song, playlist);
+      const playlistWithNumbers = playlist.map(s => ({
+        id: Number(s.id),
+        title: s.title,
+        author: s.author,
+        coverImage: s.coverImage,
+        audioUrl: s.audioUrl,
+      }));
+      playSong(song, playlistWithNumbers);
     } else {
       playSong(song);
     }
@@ -195,7 +269,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
       <div className="group relative overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
         <div className="block">
           {/* Image Container */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden">
+          <div className="relative aspect-square w-full overflow-hidden">
             <Image
               src={story.coverImage}
               alt={`Cover art for ${story.title}`}
@@ -214,7 +288,11 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
               onClick={handlePlay}
               className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg hover:bg-primary/90 transition-all duration-200"
             >
-              <Play size={18} fill="currentColor" className="ml-0.5" />
+              {isCurrentlyPlaying ? (
+                <Pause size={18} fill="currentColor" />
+              ) : (
+                <Play size={18} fill="currentColor" className="ml-0.5" />
+              )}
             </button>
             
             {/* Duration Badge - Bottom Left */}
@@ -253,7 +331,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
                 
                 <div className="flex items-center space-x-1">
                   <MessageCircle size={14} className="text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">{story.comments?.length || 0}</span>
+                  <span className="text-xs text-muted-foreground">{commentCount}</span>
                 </div>
               </div>
               
