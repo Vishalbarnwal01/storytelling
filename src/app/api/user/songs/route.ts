@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         title, 
         description, 
         thumbnail_path, 
+        audio_path,
         status, 
         views, 
         likes,
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
       views: song.views || 0,
       description: song.description,
       thumbnail: song.thumbnail_path,
+      audio: song.audio_path,
     }));
 
     return NextResponse.json({ songs: transformedSongs });

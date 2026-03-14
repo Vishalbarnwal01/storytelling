@@ -5,13 +5,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   BarChart3, 
   CheckCircle, 
   Clock, 
   Upload as UploadIcon,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Edit,
+  Trash2,
+  Play
 } from 'lucide-react';
 import {
   Table,
@@ -26,9 +33,12 @@ import { Badge } from '@/components/ui/badge';
 interface Song {
   id: number;
   title: string;
+  description: string;
   uploadedAt: string;
   status: 'approved' | 'pending' | 'rejected';
   views?: number;
+  thumbnail?: string;
+  audio?: string;
 }
 
 interface User {
@@ -80,6 +90,15 @@ export default function DashboardPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState({ title: '', description: '', thumbnail: null as File | null });
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string>('');
+  const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -127,6 +146,88 @@ export default function DashboardPage() {
     if (user) {
       setIsRefreshing(true);
       await fetchUserSongs(user.id);
+    }
+  };
+
+  const handleEditClick = (song: Song) => {
+    setEditingId(song.id);
+    setEditFormData({ title: song.title, description: song.description, thumbnail: null });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editingId || !user || !editFormData.title.trim() || !editFormData.description.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', editFormData.title);
+      formData.append('description', editFormData.description);
+      formData.append('userId', user.id.toString());
+      
+      if (editFormData.thumbnail) {
+        formData.append('thumbnail', editFormData.thumbnail);
+      }
+
+      const response = await fetch(`/api/songs/${editingId}`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert('Story updated successfully!');
+        setIsEditModalOpen(false);
+        await fetchUserSongs(user.id);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error: any) {
+      alert(`Error updating story: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteClick = (songId: number) => {
+    setDeletingId(songId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingId || !user) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/songs/${deletingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (response.ok) {
+        alert('Story deleted successfully!');
+        setIsDeleteDialogOpen(false);
+        await fetchUserSongs(user.id);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error: any) {
+      alert(`Error deleting story: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePlayClick = (song: Song) => {
+    if (song.audio) {
+      setPlayingId(song.id);
+      setAudioUrl(`/uploads/${song.audio}`);
+      setIsAudioPlayerOpen(true);
     }
   };
 
@@ -238,6 +339,7 @@ export default function DashboardPage() {
                       <TableHead>Uploaded</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Views</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -258,6 +360,34 @@ export default function DashboardPage() {
                         <TableCell className="text-right">
                           {song.views || 0}
                         </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePlayClick(song)}
+                              title="Play"
+                            >
+                              <Play className="h-4 w-4 text-green-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditClick(song)}
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(song.id)}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -266,6 +396,126 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Edit Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit Story</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="edit-title" className="text-sm font-medium">
+                  Title
+                </label>
+                <Input
+                  id="edit-title"
+                  value={editFormData.title}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, title: e.target.value })
+                  }
+                  placeholder="Enter story title"
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="edit-description" className="text-sm font-medium">
+                  Description
+                </label>
+                <Textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, description: e.target.value })
+                  }
+                  placeholder="Enter story description"
+                  rows={4}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="edit-thumbnail" className="text-sm font-medium">
+                  Thumbnail (Optional)
+                </label>
+                <Input
+                  id="edit-thumbnail"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      thumbnail: e.target.files?.[0] || null,
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleEditSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Story</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this story? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSubmitting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={isSubmitting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Audio Player Dialog */}
+        <Dialog open={isAudioPlayerOpen} onOpenChange={setIsAudioPlayerOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Play Story</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center gap-4 py-4">
+              {audioUrl && (
+                <audio
+                  controls
+                  className="w-full"
+                  autoPlay
+                  controlsList="nodownload"
+                >
+                  <source src={audioUrl} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsAudioPlayerOpen(false)}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import AudioPlayer from '@/components/audio/AudioPlayer';
 import { 
   Shield, 
@@ -23,7 +24,10 @@ import {
   Loader2,
   ArrowLeft,
   Headphones,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Edit,
+  Trash2,
+  Play
 } from 'lucide-react';
 import {
   Tabs,
@@ -77,6 +81,16 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const [editingStory, setEditingStory] = useState<Story | null>(null);
+  const [editFormData, setEditFormData] = useState({ title: '', description: '', thumbnail: null as File | null });
+  const [isEditingStory, setIsEditingStory] = useState(false);
+  const [deletingStoryId, setDeletingStoryId] = useState<number | null>(null);
+  const [isDeletingStory, setIsDeletingStory] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [isDeleteStoryDialogOpen, setIsDeleteStoryDialogOpen] = useState(false);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   
   // Upload form state
   const [uploadTitle, setUploadTitle] = useState('');
@@ -198,6 +212,144 @@ export default function AdminPage() {
       });
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  const handleEditStory = (story: Story) => {
+    setEditingStory(story);
+    setEditFormData({ title: story.title, description: story.description, thumbnail: null });
+    setIsEditingStory(true);
+  };
+
+  const handleEditStorySubmit = async () => {
+    if (!editingStory || !editFormData.title.trim() || !editFormData.description.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please fill in all required fields',
+      });
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', editFormData.title);
+      formData.append('description', editFormData.description);
+      
+      if (editFormData.thumbnail) {
+        formData.append('thumbnail', editFormData.thumbnail);
+      }
+
+      const response = await fetch(`/api/admin/stories/${editingStory.id}`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Story updated successfully',
+        });
+        setIsEditingStory(false);
+        await fetchStories();
+        setSelectedStory(null);
+      } else {
+        const error = await response.json();
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.error,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    }
+  };
+
+  const handleDeleteStory = (storyId: number) => {
+    setDeletingStoryId(storyId);
+    setIsDeleteStoryDialogOpen(true);
+  };
+
+  const handleDeleteStoryConfirm = async () => {
+    if (!deletingStoryId) return;
+
+    setIsDeletingStory(true);
+    try {
+      const response = await fetch(`/api/admin/stories/${deletingStoryId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Story deleted successfully',
+        });
+        setIsDeleteStoryDialogOpen(false);
+        await fetchStories();
+        setSelectedStory(null);
+      } else {
+        const error = await response.json();
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.error,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    } finally {
+      setIsDeletingStory(false);
+    }
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    setDeletingUserId(userId);
+    setIsDeleteUserDialogOpen(true);
+  };
+
+  const handleDeleteUserConfirm = async () => {
+    if (!deletingUserId) return;
+
+    setIsDeletingUser(true);
+    try {
+      const response = await fetch(`/api/admin/users/${deletingUserId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'User and all their stories deleted successfully',
+        });
+        setIsDeleteUserDialogOpen(false);
+        await Promise.all([fetchUsers(), fetchStories()]);
+      } else {
+        const error = await response.json();
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.error,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -362,6 +514,7 @@ export default function AdminPage() {
                       <TableRow>
                         <TableHead>Email</TableHead>
                         <TableHead>Joined</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -370,6 +523,16 @@ export default function AdminPage() {
                           <TableCell className="font-medium">{user.email}</TableCell>
                           <TableCell>
                             {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -452,6 +615,40 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <div className="flex gap-2 items-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStory(story);
+                              setIsPlayingAudio(true);
+                            }}
+                            title="Play"
+                          >
+                            <Play className="h-4 w-4 text-green-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditStory(story);
+                            }}
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteStory(story.id);
+                            }}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                           {getStatusBadge(story.status)}
                         </div>
                       </div>
@@ -774,6 +971,119 @@ export default function AdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Story Modal */}
+      <Dialog open={isEditingStory} onOpenChange={setIsEditingStory}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Story</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="edit-title" className="text-sm font-medium">
+                Title
+              </label>
+              <Input
+                id="edit-title"
+                value={editFormData.title}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, title: e.target.value })
+                }
+                placeholder="Enter story title"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="edit-description" className="text-sm font-medium">
+                Description
+              </label>
+              <Textarea
+                id="edit-description"
+                value={editFormData.description}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, description: e.target.value })
+                }
+                placeholder="Enter story description"
+                rows={4}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="edit-thumbnail" className="text-sm font-medium">
+                Thumbnail (Optional)
+              </label>
+              <Input
+                id="edit-thumbnail"
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    thumbnail: e.target.files?.[0] || null,
+                  })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditingStory(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditStorySubmit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Story Confirmation Dialog */}
+      <AlertDialog open={isDeleteStoryDialogOpen} onOpenChange={setIsDeleteStoryDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Story</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this story? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingStory}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteStoryConfirm}
+              disabled={isDeletingStory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingStory ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this user and all their stories? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingUser}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUserConfirm}
+              disabled={isDeletingUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingUser ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
