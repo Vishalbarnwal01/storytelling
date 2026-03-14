@@ -45,3 +45,16 @@ firebase-debug.log
 firestore-debug.log
 
 public/uploads/
+
+# docker
+Dockerfile
+docker-compose.yml
+docker-compose.yaml
+.dockerignore
+docker/
+
+# docker containers / volumes
+*.log
+*.pid
+*.seed
+*.pid.lock
