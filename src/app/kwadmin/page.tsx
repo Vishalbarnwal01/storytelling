@@ -13,10 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import AudioPlayer from '@/components/audio/AudioPlayer';
-import { 
-  Shield, 
-  Users, 
-  FileText, 
+import {
+  Shield,
+  Users,
+  FileText,
   Upload as UploadIcon,
   User,
   Check,
@@ -44,6 +44,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface User {
   id: number;
@@ -70,6 +71,13 @@ interface AdminUser {
   email: string;
 }
 
+const categories = [
+  { id: 'pop', name: 'Pop' },
+  { id: 'jazz', name: 'Jazz' },
+  { id: 'rock', name: 'Rock' },
+  { id: 'classical', name: 'Classical' },
+];
+
 export default function AdminPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -91,10 +99,11 @@ export default function AdminPage() {
   const [isDeleteStoryDialogOpen, setIsDeleteStoryDialogOpen] = useState(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  
+
   // Upload form state
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
@@ -106,7 +115,7 @@ export default function AdminPage() {
       router.push('/admin-login');
       return;
     }
-    
+
     const parsedAdmin = JSON.parse(adminSession);
     setAdminUser(parsedAdmin);
 
@@ -235,7 +244,7 @@ export default function AdminPage() {
       const formData = new FormData();
       formData.append('title', editFormData.title);
       formData.append('description', editFormData.description);
-      
+
       if (editFormData.thumbnail) {
         formData.append('thumbnail', editFormData.thumbnail);
       }
@@ -390,10 +399,11 @@ export default function AdminPage() {
     try {
       const formData = new FormData();
       formData.append('title', uploadTitle);
+      formData.append('category', uploadCategory);
       formData.append('description', uploadDescription);
       formData.append('adminId', adminUser?.id.toString() || '');
       formData.append('audioFile', audioFileRef.current.files[0]);
-      
+
       if (thumbnailFileRef.current?.files?.[0]) {
         formData.append('thumbnailFile', thumbnailFileRef.current.files[0]);
       }
@@ -464,17 +474,17 @@ export default function AdminPage() {
       <div className="container py-6">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={() => {
-    localStorage.removeItem("adminSession");
-    window.location.href = "/";
-  }}
->
-  <ArrowLeft className="h-4 w-4" />
-  Logout
-</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              localStorage.removeItem("adminSession");
+              window.location.href = "/";
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Logout
+          </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-accent" />
             <h1 className="text-4xl font-bold">Admin Dashboard</h1>
@@ -580,8 +590,8 @@ export default function AdminPage() {
               <CardContent>
                 <div className="space-y-4">
                   {stories.map((story) => (
-                    <div 
-                      key={story.id} 
+                    <div
+                      key={story.id}
                       className="border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-accent/5 transition-colors"
                       onClick={() => setSelectedStory(story)}
                     >
@@ -674,18 +684,37 @@ export default function AdminPage() {
                 <form onSubmit={handleAdminUpload} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="admin-title">Story Title</Label>
-                    <Input 
-                      id="admin-title" 
+                    <Input
+                      id="admin-title"
                       placeholder="Enter story title"
                       value={uploadTitle}
                       onChange={(e) => setUploadTitle(e.target.value)}
                       disabled={isUploading}
                     />
                   </div>
+                  {/**Select Category */}
+                  <div className='space-y-2'>
+                    <Select
+                      value={uploadCategory}
+                      onValueChange={(value) => setUploadCategory(value)}
+                      disabled={isUploading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="admin-description">Description</Label>
-                    <textarea 
+                    <textarea
                       id="admin-description"
                       placeholder="Enter story description"
                       className="w-full min-h-24 p-2 border rounded-md bg-background text-foreground"
@@ -801,9 +830,9 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={isUploading} 
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
                     className="w-full"
                   >
                     {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -863,7 +892,7 @@ export default function AdminPage() {
               <DialogHeader>
                 <DialogTitle>{selectedStory.title}</DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-6">
                 {/* Thumbnail */}
                 {selectedStory.thumbnailPath && (

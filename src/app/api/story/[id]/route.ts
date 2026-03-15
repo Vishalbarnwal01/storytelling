@@ -6,11 +6,11 @@ export async function GET(
 ) {
   try {
     const storyId = params.id;
-    
+
     const connection = await db.getConnection();
-    
+
     const [songs] = await connection.query(
-      `SELECT s.*, u.name as creator_name FROM songs s 
+      `SELECT s.*, u.email as creator_name FROM songs s 
        LEFT JOIN users u ON s.user_id = u.id 
        WHERE s.id = ?`,
       [storyId]
