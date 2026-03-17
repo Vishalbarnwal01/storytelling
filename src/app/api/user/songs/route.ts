@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   let connection: any = null;
@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       `SELECT 
         id, 
         title, 
+        category,
         description, 
         thumbnail_path, 
         audio_path,
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     const transformedSongs = (songs as any[]).map((song) => ({
       id: song.id,
       title: song.title,
+      category: song.category,
       status: song.status as 'approved' | 'pending' | 'rejected',
       uploadedAt: new Date(song.created_at).toISOString().split('T')[0],
       views: song.views || 0,

@@ -1,40 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import AudioPlayer from '@/components/audio/AudioPlayer';
-import {
-  Shield,
-  Users,
-  FileText,
-  Upload as UploadIcon,
-  User,
-  Check,
-  X,
-  Loader2,
-  ArrowLeft,
-  Headphones,
-  Image as ImageIcon,
-  Edit,
-  Trash2,
-  Play
-} from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -43,8 +17,33 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import {
+  ArrowLeft,
+  Check,
+  Edit,
+  FileText,
+  Headphones,
+  Image as ImageIcon,
+  Loader2,
+  Play,
+  Shield,
+  Trash2,
+  Upload as UploadIcon,
+  User,
+  Users,
+  X
+} from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 interface User {
   id: number;
@@ -99,6 +98,10 @@ export default function AdminPage() {
   const [isDeleteStoryDialogOpen, setIsDeleteStoryDialogOpen] = useState(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectingStoryId, setRejectingStoryId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Upload form state
   const [uploadTitle, setUploadTitle] = useState('');
@@ -189,38 +192,47 @@ export default function AdminPage() {
     }
   };
 
-  const handleRejectStory = async (storyId: number) => {
+  // Open rejection modal instead of rejecting directly
+  const handleRejectStory = (storyId: number) => {
+    setRejectingStoryId(storyId);
+    setRejectionReason('');
+    setIsRejectModalOpen(true);
+  };
+
+  // Called when admin submits the rejection reason
+  const handleRejectWithReason = async () => {
+    if (!rejectionReason.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a rejection reason' });
+      return;
+    }
+    if (!rejectingStoryId) return;
+
+    setIsRejecting(true);
     try {
-      setIsApproving(true);
-      const response = await fetch('/api/admin/stories/approve', {
+      const response = await fetch('/api/admin/stories/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ songId: storyId, status: 'rejected' }),
+        body: JSON.stringify({
+          songId: rejectingStoryId,
+          adminId: adminUser?.id,
+          reason: rejectionReason.trim(),
+        }),
       });
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Story rejected',
-        });
-        setStories(stories.map(s => s.id === storyId ? { ...s, status: 'rejected' } : s));
+        toast({ title: 'Success', description: 'Story rejected with reason saved' });
+        setStories(stories.map(s => s.id === rejectingStoryId ? { ...s, status: 'rejected' } : s));
+        setIsRejectModalOpen(false);
         setSelectedStory(null);
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to reject story',
-        });
+        const data = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: data.error || 'Failed to reject story' });
       }
     } catch (error) {
       console.error('Error rejecting story:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to reject story',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to reject story' });
     } finally {
-      setIsApproving(false);
+      setIsRejecting(false);
     }
   };
 
@@ -385,6 +397,15 @@ export default function AdminPage() {
       return;
     }
 
+    if (!uploadCategory.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a category',
+      });
+      return;
+    }
+
     if (!audioFileRef.current?.files?.[0]) {
       toast({
         variant: 'destructive',
@@ -416,7 +437,7 @@ export default function AdminPage() {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: 'Story uploaded and is now live!',
+          description: 'Story uploaded and is live now!',
         });
         // Reset form
         setUploadTitle('');
@@ -427,6 +448,7 @@ export default function AdminPage() {
         // Refresh stories
         await fetchStories();
       } else {
+        console.log(response, 'response');
         const data = await response.json();
         toast({
           variant: 'destructive',
@@ -598,6 +620,7 @@ export default function AdminPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{story.title}</h3>
+                          <p className="text-sm text-muted-foreground">{story.category ? story.category : "N/A"}</p>
                           <p className="text-sm text-muted-foreground">{story.userEmail}</p>
                           <p className="text-sm mt-2 line-clamp-2">{story.description}</p>
                         </div>
@@ -694,6 +717,7 @@ export default function AdminPage() {
                   </div>
                   {/**Select Category */}
                   <div className='space-y-2'>
+                    <Label htmlFor="admin-category">Select Category</Label>
                     <Select
                       value={uploadCategory}
                       onValueChange={(value) => setUploadCategory(value)}
@@ -912,6 +936,12 @@ export default function AdminPage() {
                   <p className="font-semibold text-lg">{selectedStory.userEmail}</p>
                 </div>
 
+                {/* Category song */}
+                <div className="space-y-2 p-4 bg-accent/5 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Category</p>
+                  <p className="font-semibold text-lg">{selectedStory.category ? selectedStory.category : "N/A"}</p>
+                </div>
+
                 {/* Description */}
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Description</Label>
@@ -1113,6 +1143,47 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Rejection Reason Modal */}
+      <Dialog open={isRejectModalOpen} onOpenChange={(open) => { if (!isRejecting) setIsRejectModalOpen(open); }}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <X className="h-5 w-5" />
+              Reject Story
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Please provide a reason for rejection. This will be recorded in the system.
+            </p>
+            <Textarea
+              placeholder="Enter rejection reason..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={5}
+              disabled={isRejecting}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectModalOpen(false)}
+              disabled={isRejecting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectWithReason}
+              disabled={isRejecting || !rejectionReason.trim()}
+            >
+              {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

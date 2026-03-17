@@ -5,8 +5,9 @@ export async function GET() {
     const connection = await db.getConnection();
 
     const [stories] = await connection.query(
-      `SELECT s.id, s.title, s.user_id, s.thumbnail_path, s.audio_path, 
-              s.description, s.likes, s.views, s.created_at, u.email as creator_name
+      `SELECT s.id, s.title, s.category, s.user_id, s.thumbnail_path, s.audio_path, 
+              s.description, s.likes, s.views, s.created_at, u.email as creator_name,
+              (SELECT COUNT(*) FROM comments c WHERE c.song_id = s.id) as comment_count
        FROM songs s
        LEFT JOIN users u ON s.user_id = u.id
        WHERE s.status = 'approved'

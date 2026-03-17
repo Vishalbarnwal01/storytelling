@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   let connection: any = null;
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
         s.id, 
         s.user_id, 
         s.title, 
+        s.category, 
         s.description, 
         s.audio_path, 
         s.thumbnail_path, 
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
     const transformedStories = (stories as any[]).map((story) => ({
       id: story.id,
       userId: story.user_id,
+      category: story.category,
       userEmail: story.email,
       title: story.title,
       description: story.description,

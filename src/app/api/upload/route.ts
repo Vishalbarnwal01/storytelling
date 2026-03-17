@@ -1,22 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
 import { db } from '@/lib/db';
+import { existsSync } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
+import { NextRequest, NextResponse } from 'next/server';
+import { join } from 'path';
 
 export async function POST(request: NextRequest) {
   let connection: any = null;
   try {
     const formData = await request.formData();
-    
+
     const title = formData.get('title') as string;
+    const category = formData.get('category') as string;
     const description = formData.get('description') as string;
     const userId = formData.get('userId') as string;
     const audioFile = formData.get('audio') as File;
     const thumbnailFile = formData.get('thumbnail') as File;
 
     // Validation
-    if (!title || !description || !userId || !audioFile || !thumbnailFile) {
+    if (!title || !category || !description || !userId || !audioFile || !thumbnailFile) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -87,13 +88,14 @@ export async function POST(request: NextRequest) {
 
     // Save to database
     connection = await db.getConnection();
-    
+
     const [result] = await connection.query(
-      `INSERT INTO songs (user_id, title, description, audio_path, thumbnail_path, status, views, likes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', 0, 0, NOW(), NOW())`,
+      `INSERT INTO songs (user_id, title, category, description, audio_path, thumbnail_path, status, views, likes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, NOW(), NOW())`,
       [
         parseInt(userId),
         title,
+        category,
         description,
         audioFileName,
         thumbnailFileName
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Upload error:', error);
-    
+
     if (connection) {
       try {
         connection.release();

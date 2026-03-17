@@ -1,25 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { 
-  BarChart3, 
-  CheckCircle, 
-  Clock, 
-  Upload as UploadIcon,
-  ArrowLeft,
-  RefreshCw,
-  Edit,
-  Trash2,
-  Play
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -28,7 +14,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  ArrowLeft,
+  BarChart3,
+  CheckCircle,
+  Clock,
+  Edit,
+  Play,
+  RefreshCw,
+  Trash2,
+  Upload as UploadIcon
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface Song {
   id: number;
@@ -46,15 +46,15 @@ interface User {
   email: string;
 }
 
-const StatCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  color 
-}: { 
-  title: string; 
-  value: number; 
-  icon: React.ComponentType<any>; 
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  color
+}: {
+  title: string;
+  value: number;
+  icon: React.ComponentType<any>;
   color: string;
 }) => (
   <Card>
@@ -107,7 +107,7 @@ export default function DashboardPage() {
       router.push('/login');
       return;
     }
-    
+
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
@@ -167,7 +167,7 @@ export default function DashboardPage() {
       formData.append('title', editFormData.title);
       formData.append('description', editFormData.description);
       formData.append('userId', user.id.toString());
-      
+
       if (editFormData.thumbnail) {
         formData.append('thumbnail', editFormData.thumbnail);
       }
@@ -269,8 +269,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
@@ -336,6 +336,7 @@ export default function DashboardPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Title</TableHead>
+                      <TableHead>Category</TableHead>
                       <TableHead>Uploaded</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Views</TableHead>
@@ -346,12 +347,15 @@ export default function DashboardPage() {
                     {songs.map((song) => (
                       <TableRow key={song.id}>
                         <TableCell className="font-medium">
-                          <Link 
+                          <Link
                             href={`/story/${song.id}`}
                             className="hover:underline text-accent"
                           >
                             {song.title}
                           </Link>
+                        </TableCell>
+                        <TableCell>
+                          {song.category ? song.category : '-'}
                         </TableCell>
                         <TableCell>
                           {new Date(song.uploadedAt).toLocaleDateString()}

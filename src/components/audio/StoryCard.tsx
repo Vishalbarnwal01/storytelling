@@ -1,15 +1,13 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import type { Story } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Play, Clock, Pause } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { useAudio } from '@/contexts/AudioContext';
+import { useToast } from '@/hooks/use-toast';
+import type { Story } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { Clock, Heart, MessageCircle, Pause, Play } from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface StoryCardProps {
   story: Story;
