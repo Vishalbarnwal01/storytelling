@@ -422,7 +422,6 @@ export default function AdminPage() {
       formData.append('title', uploadTitle);
       formData.append('category', uploadCategory);
       formData.append('description', uploadDescription);
-      formData.append('adminId', adminUser?.id.toString() || '');
       formData.append('audioFile', audioFileRef.current.files[0]);
 
       if (thumbnailFileRef.current?.files?.[0]) {

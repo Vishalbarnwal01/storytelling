@@ -9,11 +9,11 @@ export async function POST(request: Request) {
     const title = formData.get('title') as string;
     const category = formData.get('category') as string;
     const description = formData.get('description') as string;
-    const adminId = formData.get('adminId') as string;
+    // const adminId = formData.get('adminId') as string;
     const audioFile = formData.get('audioFile') as File;
     const thumbnailFile = formData.get('thumbnailFile') as File;
 
-    if (!title || !description || !adminId || !audioFile) {
+    if (!title || !description || !audioFile) {
       return Response.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     await connection.query(
       `INSERT INTO songs (user_id, title, category, description, audio_path, thumbnail_path, status, views, likes, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [adminId, title, category, description, audioFileName, thumbnailFileName, 'approved', 0, 0]
+      [0, title, category, description, audioFileName, thumbnailFileName, 'approved', 0, 0]
     );
 
     connection.release();

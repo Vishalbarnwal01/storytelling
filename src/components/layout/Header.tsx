@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Headphones, LogOut, Upload, BarChart3, Menu, X } from 'lucide-react';
+import { BarChart3, Headphones, LogOut, Menu, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface User {
   id: number;
@@ -31,7 +31,7 @@ export default function Header() {
 
   // Hide header on admin and kwadmin pages
   const isAdminPage = pathname?.startsWith('/kwadmin') || pathname?.startsWith('/admin-login');
-  
+
   if (isAdminPage) {
     return null;
   }
@@ -50,7 +50,7 @@ export default function Header() {
 
     window.addEventListener('userLoggedIn', handleUserUpdate);
     window.addEventListener('userLoggedOut', handleUserUpdate);
-    
+
     return () => {
       window.removeEventListener('userLoggedIn', handleUserUpdate);
       window.removeEventListener('userLoggedOut', handleUserUpdate);
@@ -109,7 +109,7 @@ export default function Header() {
                         Account
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
+                        {user.email?.split('@')[0]}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -156,15 +156,15 @@ export default function Header() {
               <div className="space-y-6 py-6">
                 {/* Navigation Links */}
                 <nav className="flex flex-col space-y-4">
-                  <Link 
-                    href="/" 
+                  <Link
+                    href="/"
                     className="text-foreground hover:text-accent transition-colors text-lg font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Home
                   </Link>
-                  <Link 
-                    href="/explore" 
+                  <Link
+                    href="/explore"
                     className="text-foreground hover:text-accent transition-colors text-lg font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -187,23 +187,23 @@ export default function Header() {
                           <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
                         </div>
                       </div>
-                      <Link 
-                        href="/upload" 
+                      <Link
+                        href="/upload"
                         className="flex items-center text-foreground hover:text-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Upload className="mr-3 h-5 w-5" />
                         <span className="font-medium">Upload Song</span>
                       </Link>
-                      <Link 
-                        href="/dashboard" 
+                      <Link
+                        href="/dashboard"
                         className="flex items-center text-foreground hover:text-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <BarChart3 className="mr-3 h-5 w-5" />
                         <span className="font-medium">My Dashboard</span>
                       </Link>
-                      <button 
+                      <button
                         onClick={() => {
                           handleSignOut();
                           setIsMobileMenuOpen(false);
