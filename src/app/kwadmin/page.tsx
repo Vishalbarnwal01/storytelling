@@ -827,7 +827,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="admin-audio">Audio File (MP3, WAV, M4A, FLAC)</Label>
+                    <Label htmlFor="admin-audio">Approx 12 to 15 min audio (MP3, WAV, M4A, FLAC)</Label>
                     <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center hover:border-accent/50 transition-colors">
                       {audioFileRef.current?.files?.[0] ? (
                         <div className="text-sm">

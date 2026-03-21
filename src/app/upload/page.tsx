@@ -315,7 +315,7 @@ export default function UploadPage() {
 
             {/* Audio File */}
             <div className="space-y-2">
-              <Label htmlFor="audio">Audio File (MP3, WAV, M4A, FLAC) *</Label>
+              <Label htmlFor="audio"> Approx 12 to 15 min audio (MP3, WAV, M4A, FLAC) *</Label>
               <div className="relative flex items-center justify-center w-full">
                 <label
                   htmlFor="audio"
