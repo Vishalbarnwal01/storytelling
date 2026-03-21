@@ -1,10 +1,9 @@
+import GlobalAudioPlayer from '@/components/audio/GlobalAudioPlayer';
+import Header from '@/components/layout/Header';
+import { Toaster } from '@/components/ui/toaster';
+import { AudioProvider } from '@/contexts/AudioContext';
 import type { Metadata } from 'next';
 import './globals.css';
-import { cn } from '@/lib/utils';
-import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/layout/Header';
-import GlobalAudioPlayer from '@/components/audio/GlobalAudioPlayer';
-import { AudioProvider } from '@/contexts/AudioContext';
 
 export const metadata: Metadata = {
   title: 'Kahaniwaala',

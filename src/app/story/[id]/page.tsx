@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Clock, MessageCircle, Heart, User, Trash2, Loader2, Calendar, Play, Pause, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -58,13 +58,21 @@ export default function StoryDetailPage() {
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [duration, setDuration] = useState('00:00');
   const [allStories, setAllStories] = useState<any[]>([]);
+  const prevAudioIdRef = useRef(currentAudio?.id);
+
+  useEffect(() => {
+    if (currentAudio?.id && prevAudioIdRef.current && currentAudio.id !== prevAudioIdRef.current) {
+      router.push(`/story/${currentAudio.id}`);
+    }
+    prevAudioIdRef.current = currentAudio?.id;
+  }, [currentAudio?.id, router]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    
+
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setIsAdmin(user.role === 'admin' || user.email?.includes('admin'));
@@ -90,7 +98,7 @@ export default function StoryDetailPage() {
             const audioUrl = storyData.audioUrl || `/uploads/${storyData.audioPath}`;
             const audio = new Audio();
             audio.src = audioUrl;
-            
+
             const updateDuration = () => {
               if (audio.duration && !isNaN(audio.duration)) {
                 const minutes = Math.floor(audio.duration / 60);
@@ -99,7 +107,7 @@ export default function StoryDetailPage() {
                 setDuration(formattedDuration);
               }
             };
-            
+
             audio.addEventListener('loadedmetadata', updateDuration);
           }
         }
@@ -120,7 +128,7 @@ export default function StoryDetailPage() {
           const transformedStories = (storiesData.stories || []).map((s: any) => ({
             id: s.id.toString(),
             title: s.title,
-            author: s.creator_name || 'John',
+            author: s.creator_name ? s.creator_name : 'John',
             coverImage: s.thumbnail_path ? `/uploads/${s.thumbnail_path}` : '/placeholder.jpg',
             audioUrl: s.audio_path ? `/uploads/${s.audio_path}` : '',
           }));
@@ -271,7 +279,7 @@ export default function StoryDetailPage() {
             title: 'Success',
             description: 'Like removed',
           });
-          
+
           // Emit event to update story cards
           window.dispatchEvent(new CustomEvent('storyLikeChanged', {
             detail: { storyId: Number(storyId), isLiked: false, likeCount: data.likeCount }
@@ -302,7 +310,7 @@ export default function StoryDetailPage() {
             title: 'Success',
             description: 'Story liked!',
           });
-          
+
           // Emit event to update story cards
           window.dispatchEvent(new CustomEvent('storyLikeChanged', {
             detail: { storyId: Number(storyId), isLiked: true, likeCount: data.likeCount }
@@ -415,14 +423,14 @@ export default function StoryDetailPage() {
         {/* Left Side - Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Title */}
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl sm:text-4xl lg:text-5xl font-bold"
           >
             {story.title}
           </motion.h1>
-          
+
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -438,7 +446,7 @@ export default function StoryDetailPage() {
               <span>{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>
             </div>
           </div>
-          
+
           {/* Author Section */}
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
@@ -450,15 +458,15 @@ export default function StoryDetailPage() {
               <p className="text-xs text-muted-foreground">Storyteller</p>
             </div>
           </div>
-          
+
           {/* Description */}
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <p className="text-muted-foreground/90">{story.description}</p>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 pt-4">
-            <Button 
+            <Button
               onClick={handlePlay}
               disabled={isLikeLoading}
               size="lg"
@@ -476,20 +484,20 @@ export default function StoryDetailPage() {
                 </>
               )}
             </Button>
-            <Button 
+            <Button
               variant={isLiked ? "default" : "outline"}
               onClick={handleLike}
               disabled={isLikeLoading}
               size="lg"
               className="flex items-center gap-2"
             >
-              <Heart 
-                size={18} 
+              <Heart
+                size={18}
                 fill={isLiked ? "currentColor" : "none"}
               />
               {isLiked ? "Liked" : "Like"}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={handleShare}
               size="lg"
@@ -500,7 +508,7 @@ export default function StoryDetailPage() {
             </Button>
           </div>
         </div>
-        
+
         {/* Right Side - Cover Image (Sticky) */}
         <div className="lg:col-span-1">
           <div className="sticky top-24">
@@ -514,7 +522,7 @@ export default function StoryDetailPage() {
                 className="h-full w-full object-cover"
               />
             </div>
-            
+
             {/* Audio Wave Animation */}
             {isCurrentlyPlaying && (
               <div className="mt-6 flex justify-center">
@@ -547,7 +555,7 @@ export default function StoryDetailPage() {
           <MessageCircle className="h-6 w-6" />
           Comments ({comments.length})
         </h2>
-        
+
         {/* Comment Input */}
         {currentUser ? (
           <Card className="p-4 sm:p-6">
@@ -593,7 +601,7 @@ export default function StoryDetailPage() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <p className="font-semibold text-sm">{comment.user_email}</p>
+                    <p className="font-semibold text-sm">{comment.user_email.split('@')[0]}</p>
                     <div className="flex items-center gap-2">
                       <p className="text-xs text-muted-foreground whitespace-nowrap">
                         {new Date(comment.created_at).toLocaleDateString()}

@@ -73,6 +73,15 @@ export default function LoginForm() {
       
       const { email, name, sub: googleId } = decodedToken;
 
+      if (!email.toLowerCase().endsWith('@gmail.com') && !email.toLowerCase().endsWith('@outlook.com')) {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'Only @gmail.com and @outlook.com addresses are allowed.',
+        });
+        return;
+      }
+
       const response = await fetch('/api/auth/google-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,8 +152,13 @@ export default function LoginForm() {
 
     // Validation
     const errors: { [key: string]: string } = {};
-    if (!signInEmail) errors.email = 'Email is required';
-    if (!signInEmail.includes('@')) errors.email = 'Please enter a valid email';
+    if (!signInEmail) {
+      errors.email = 'Email is required';
+    } else if (!signInEmail.includes('@')) {
+      errors.email = 'Please enter a valid email';
+    } else if (!signInEmail.toLowerCase().endsWith('@gmail.com') && !signInEmail.toLowerCase().endsWith('@outlook.com')) {
+      errors.email = 'Only @gmail.com and @outlook.com addresses are allowed';
+    }
     if (!signInPassword) errors.password = 'Password is required';
 
     if (Object.keys(errors).length > 0) {
@@ -195,8 +209,13 @@ export default function LoginForm() {
 
     // Validation
     const errors: { [key: string]: string } = {};
-    if (!signUpEmail) errors.email = 'Email is required';
-    if (!signUpEmail.includes('@')) errors.email = 'Please enter a valid email';
+    if (!signUpEmail) {
+      errors.email = 'Email is required';
+    } else if (!signUpEmail.includes('@')) {
+      errors.email = 'Please enter a valid email';
+    } else if (!signUpEmail.toLowerCase().endsWith('@gmail.com') && !signUpEmail.toLowerCase().endsWith('@outlook.com')) {
+      errors.email = 'Only @gmail.com and @outlook.com addresses are allowed';
+    }
     if (!signUpName || signUpName.length < 2) errors.name = 'Full name must be at least 2 characters';
     if (!signUpPassword || signUpPassword.length < 6) errors.password = 'Password must be at least 6 characters';
 

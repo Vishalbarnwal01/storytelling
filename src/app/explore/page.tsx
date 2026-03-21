@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
-import SearchBar from '@/components/audio/SearchBar';
 import FilterTabs, { type FilterType } from '@/components/audio/FilterTabs';
+import SearchBar from '@/components/audio/SearchBar';
 import StoryCard from '@/components/audio/StoryCard';
 import type { Story } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function ExplorePage() {
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -14,39 +14,24 @@ export default function ExplorePage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all stories
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const response = await fetch('/api/stories');
-        if (response.ok) {
-          const data = await response.json();
-          const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
-            id: story.id.toString(),
-            title: story.title,
-            author: story.creator_name || 'John',
-            coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
-            imageHint: 'story cover',
-            audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
-            duration: '00:00',
-            likes: story.likes || 0,
-            comments: [],
-          }));
-          setAllStories(transformedStories);
-          filterStories(transformedStories, searchQuery, activeFilter);
-        }
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const categories = [
+    { id: 'true-crime', name: 'True Crime' },
+    { id: 'mystery-thriller', name: 'Mystery & Thriller' },
+    { id: 'science-fiction', name: 'Science Fiction' },
+    { id: 'fantasy', name: 'Fantasy' },
+    { id: 'romance', name: 'Romance' },
+    { id: 'horror-paranormal', name: 'Horror & Paranormal' },
+    { id: 'historical-fiction', name: 'Historical Fiction' },
+    { id: 'biography', name: 'Biography' },
+    { id: 'action-adventure', name: 'Action & Adventure' },
+    { id: 'comedy-satire', name: 'Comedy & Satire' },
+    { id: 'suspenseful', name: 'Suspenseful' },
+    { id: 'inspirational', name: 'Inspirational' },
+    { id: 'mythology', name: 'Mythology' },
+  ];
 
-    fetchStories();
-  }, []);
-
-  // Filter stories based on search and filter type
-  const filterStories = (stories: Story[], query: string, filter: FilterType) => {
+  // Filter stories — defined BEFORE useEffect so it's safely callable from within it
+  const filterStories = (stories: Story[], query: string, filter: string) => {
     let result = [...stories];
 
     // Apply search filter
@@ -59,15 +44,54 @@ export default function ExplorePage() {
       );
     }
 
-    // Apply sort filter
+    // Apply sort / category filter
     if (filter === 'trending') {
       result.sort((a, b) => b.likes - a.likes);
     } else if (filter === 'newest') {
       result.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    } else if (filter !== 'all') {
+      // Category filter — compare story.category against selected category id
+      result = result.filter(
+        (story) => story.category?.toLowerCase() === filter.toLowerCase()
+      );
     }
 
     setFilteredStories(result);
   };
+
+  // Fetch all stories on mount
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const response = await fetch('/api/stories');
+        if (response.ok) {
+          const data = await response.json();
+          const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
+            id: story.id.toString(),
+            title: story.title,
+            category: story.category,
+            author: story.creator_name ? story.creator_name : 'John',
+            coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
+            imageHint: 'story cover',
+            audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
+            duration: '00:00',
+            likes: story.likes || 0,
+            commentCount: Number(story.comment_count) || 0,
+            comments: [],
+          }));
+          setAllStories(transformedStories);
+          // Default: show all stories
+          filterStories(transformedStories, '', 'all');
+        }
+      } catch (error) {
+        console.error('Error fetching stories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStories();
+  }, []);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -77,6 +101,16 @@ export default function ExplorePage() {
   const handleFilterChange = (filter: FilterType) => {
     setActiveFilter(filter);
     filterStories(allStories, searchQuery, filter);
+  };
+
+  const getEmptyMessage = () => {
+    if (searchQuery) return 'No stories found matching your search.';
+    const isCategoryFilter = activeFilter !== 'all' && activeFilter !== 'trending' && activeFilter !== 'newest';
+    if (isCategoryFilter) {
+      const name = categories.find((c) => c.id === activeFilter)?.name ?? activeFilter;
+      return `No stories available in the "${name}" category yet.`;
+    }
+    return 'No stories available yet. Check back soon!';
   };
 
   return (
@@ -91,7 +125,7 @@ export default function ExplorePage() {
       <SearchBar onSearch={handleSearch} />
 
       {/* Filter Tabs */}
-      <FilterTabs activeFilter={activeFilter} onFilterChange={handleFilterChange} />
+      <FilterTabs activeFilter={activeFilter} onFilterChange={handleFilterChange} categories={categories} />
 
       {/* Stories Grid */}
       {isLoading ? (
@@ -100,12 +134,10 @@ export default function ExplorePage() {
         </div>
       ) : filteredStories.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">
-            {searchQuery ? 'No stories found matching your search.' : 'No stories available yet. Check back soon!'}
-          </p>
+          <p className="text-muted-foreground text-lg">{getEmptyMessage()}</p>
         </div>
       ) : (
-       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {filteredStories.map((story) => (
             <StoryCard key={story.id} story={story} playlist={filteredStories} />
           ))}

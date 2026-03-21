@@ -12,16 +12,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Query admins table for admin with given email
     const [admins] = await connection.query(
       'SELECT id, email, password FROM admins WHERE email = ? AND is_active = 1',
       [email]
     );
-
-    connection.release();
-
     const adminArray = admins as any[];
 
     if (adminArray.length === 0) {
@@ -55,5 +52,9 @@ export async function POST(request: Request) {
       { error: 'Failed to log in' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

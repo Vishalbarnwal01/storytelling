@@ -27,9 +27,6 @@ export async function POST(request: NextRequest) {
       `UPDATE songs SET status = ?, updated_at = NOW() WHERE id = ?`,
       [status, songId]
     );
-
-    connection.release();
-
     if ((result as any).affectedRows === 0) {
       return NextResponse.json(
         { error: 'Song not found' },
@@ -46,7 +43,6 @@ export async function POST(request: NextRequest) {
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -56,5 +52,9 @@ export async function POST(request: NextRequest) {
       { error: error.message || 'Failed to update story' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

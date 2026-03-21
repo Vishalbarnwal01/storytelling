@@ -12,7 +12,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Delete the like
     const result = await connection.query(
@@ -25,9 +25,6 @@ export async function DELETE(request: Request) {
       `SELECT COUNT(*) as count FROM likes WHERE song_id = ?`,
       [songId]
     );
-
-    connection.release();
-
     return Response.json({
       success: true,
       message: 'Like removed successfully',
@@ -39,5 +36,9 @@ export async function DELETE(request: Request) {
       { error: 'Failed to remove like' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

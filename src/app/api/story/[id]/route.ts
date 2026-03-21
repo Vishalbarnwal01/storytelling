@@ -6,18 +6,15 @@ export async function GET(
 ) {
   try {
     const storyId = params.id;
-    
-    const connection = await db.getConnection();
-    
+
+    var connection = await db.getConnection();
+
     const [songs] = await connection.query(
-      `SELECT s.*, u.name as creator_name FROM songs s 
+      `SELECT s.*, u.email as creator_name FROM songs s 
        LEFT JOIN users u ON s.user_id = u.id 
        WHERE s.id = ?`,
       [storyId]
     );
-
-    connection.release();
-
     if (Array.isArray(songs) && songs.length === 0) {
       return Response.json({ error: 'Story not found' }, { status: 404 });
     }
@@ -39,5 +36,9 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching story:', error);
     return Response.json({ error: 'Failed to fetch story' }, { status: 500 });
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

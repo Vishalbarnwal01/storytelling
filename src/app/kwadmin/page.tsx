@@ -1,40 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import AudioPlayer from '@/components/audio/AudioPlayer';
-import { 
-  Shield, 
-  Users, 
-  FileText, 
-  Upload as UploadIcon,
-  User,
-  Check,
-  X,
-  Loader2,
-  ArrowLeft,
-  Headphones,
-  Image as ImageIcon,
-  Edit,
-  Trash2,
-  Play
-} from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -43,7 +17,33 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import {
+  ArrowLeft,
+  Check,
+  Edit,
+  FileText,
+  Headphones,
+  Image as ImageIcon,
+  Loader2,
+  Play,
+  Shield,
+  Trash2,
+  Upload as UploadIcon,
+  User,
+  Users,
+  X
+} from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 interface User {
   id: number;
@@ -63,12 +63,30 @@ interface Story {
   createdAt: string;
   thumbnailPath: string;
   audioPath: string;
+  rejectionReason?: string;
 }
 
 interface AdminUser {
   id: number;
   email: string;
 }
+
+const categories = [
+  { id: 'true-crime', name: 'True Crime' },
+  { id: 'mystery-thriller', name: 'Mystery & Thriller' },
+  { id: 'science-fiction', name: 'Science Fiction' },
+  { id: 'fantasy', name: 'Fantasy' },
+  { id: 'romance', name: 'Romance' },
+  { id: 'horror-paranormal', name: 'Horror & Paranormal' },
+  { id: 'historical-fiction', name: 'Historical Fiction' },
+  { id: 'biography', name: 'Biography' },
+  { id: 'action-adventure', name: 'Action & Adventure' },
+  { id: 'comedy-satire', name: 'Comedy & Satire' },
+  { id: 'suspenseful', name: 'Suspenseful' },
+  { id: 'inspirational', name: 'Inspirational' },
+  { id: 'mythology', name: 'Mythology' },
+];
+
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -91,10 +109,15 @@ export default function AdminPage() {
   const [isDeleteStoryDialogOpen, setIsDeleteStoryDialogOpen] = useState(false);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectingStoryId, setRejectingStoryId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
+
   // Upload form state
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const thumbnailFileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
@@ -106,7 +129,7 @@ export default function AdminPage() {
       router.push('/admin-login');
       return;
     }
-    
+
     const parsedAdmin = JSON.parse(adminSession);
     setAdminUser(parsedAdmin);
 
@@ -180,38 +203,47 @@ export default function AdminPage() {
     }
   };
 
-  const handleRejectStory = async (storyId: number) => {
+  // Open rejection modal instead of rejecting directly
+  const handleRejectStory = (storyId: number) => {
+    setRejectingStoryId(storyId);
+    setRejectionReason('');
+    setIsRejectModalOpen(true);
+  };
+
+  // Called when admin submits the rejection reason
+  const handleRejectWithReason = async () => {
+    if (!rejectionReason.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a rejection reason' });
+      return;
+    }
+    if (!rejectingStoryId) return;
+
+    setIsRejecting(true);
     try {
-      setIsApproving(true);
-      const response = await fetch('/api/admin/stories/approve', {
+      const response = await fetch('/api/admin/stories/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ songId: storyId, status: 'rejected' }),
+        body: JSON.stringify({
+          songId: rejectingStoryId,
+          adminId: adminUser?.id,
+          reason: rejectionReason.trim(),
+        }),
       });
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Story rejected',
-        });
-        setStories(stories.map(s => s.id === storyId ? { ...s, status: 'rejected' } : s));
+        toast({ title: 'Success', description: 'Story rejected with reason saved' });
+        setStories(stories.map(s => s.id === rejectingStoryId ? { ...s, status: 'rejected', rejectionReason: rejectionReason.trim() } : s));
+        setIsRejectModalOpen(false);
         setSelectedStory(null);
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to reject story',
-        });
+        const data = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: data.error || 'Failed to reject story' });
       }
     } catch (error) {
       console.error('Error rejecting story:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to reject story',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to reject story' });
     } finally {
-      setIsApproving(false);
+      setIsRejecting(false);
     }
   };
 
@@ -235,7 +267,7 @@ export default function AdminPage() {
       const formData = new FormData();
       formData.append('title', editFormData.title);
       formData.append('description', editFormData.description);
-      
+
       if (editFormData.thumbnail) {
         formData.append('thumbnail', editFormData.thumbnail);
       }
@@ -376,6 +408,15 @@ export default function AdminPage() {
       return;
     }
 
+    if (!uploadCategory.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a category',
+      });
+      return;
+    }
+
     if (!audioFileRef.current?.files?.[0]) {
       toast({
         variant: 'destructive',
@@ -390,10 +431,10 @@ export default function AdminPage() {
     try {
       const formData = new FormData();
       formData.append('title', uploadTitle);
+      formData.append('category', uploadCategory);
       formData.append('description', uploadDescription);
-      formData.append('adminId', adminUser?.id.toString() || '');
       formData.append('audioFile', audioFileRef.current.files[0]);
-      
+
       if (thumbnailFileRef.current?.files?.[0]) {
         formData.append('thumbnailFile', thumbnailFileRef.current.files[0]);
       }
@@ -406,7 +447,7 @@ export default function AdminPage() {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: 'Story uploaded and is now live!',
+          description: 'Story uploaded and is live now!',
         });
         // Reset form
         setUploadTitle('');
@@ -417,6 +458,7 @@ export default function AdminPage() {
         // Refresh stories
         await fetchStories();
       } else {
+        console.log(response, 'response');
         const data = await response.json();
         toast({
           variant: 'destructive',
@@ -464,17 +506,17 @@ export default function AdminPage() {
       <div className="container py-6">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={() => {
-    localStorage.removeItem("adminSession");
-    window.location.href = "/";
-  }}
->
-  <ArrowLeft className="h-4 w-4" />
-  Logout
-</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              localStorage.removeItem("adminSession");
+              window.location.href = "/";
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Logout
+          </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-accent" />
             <h1 className="text-4xl font-bold">Admin Dashboard</h1>
@@ -580,14 +622,15 @@ export default function AdminPage() {
               <CardContent>
                 <div className="space-y-4">
                   {stories.map((story) => (
-                    <div 
-                      key={story.id} 
+                    <div
+                      key={story.id}
                       className="border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-accent/5 transition-colors"
                       onClick={() => setSelectedStory(story)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{story.title}</h3>
+                          <p className="text-sm text-muted-foreground">{story.category ? story.category : "N/A"}</p>
                           <p className="text-sm text-muted-foreground">{story.userEmail}</p>
                           <p className="text-sm mt-2 line-clamp-2">{story.description}</p>
                         </div>
@@ -612,6 +655,13 @@ export default function AdminPage() {
                           <span className="text-xs text-muted-foreground">•</span>
                           <span className="text-xs text-muted-foreground">
                             👁️ {story.views} views
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {story.status === 'rejected' && story.rejectionReason && (
+                              <span className="text-xs text-red-500 ml-2">
+                                Rejected: {story.rejectionReason}
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div className="flex gap-2 items-center">
@@ -674,18 +724,38 @@ export default function AdminPage() {
                 <form onSubmit={handleAdminUpload} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="admin-title">Story Title</Label>
-                    <Input 
-                      id="admin-title" 
+                    <Input
+                      id="admin-title"
                       placeholder="Enter story title"
                       value={uploadTitle}
                       onChange={(e) => setUploadTitle(e.target.value)}
                       disabled={isUploading}
                     />
                   </div>
+                  {/**Select Category */}
+                  <div className='space-y-2'>
+                    <Label htmlFor="admin-category">Select Category</Label>
+                    <Select
+                      value={uploadCategory}
+                      onValueChange={(value) => setUploadCategory(value)}
+                      disabled={isUploading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="admin-description">Description</Label>
-                    <textarea 
+                    <textarea
                       id="admin-description"
                       placeholder="Enter story description"
                       className="w-full min-h-24 p-2 border rounded-md bg-background text-foreground"
@@ -757,7 +827,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="admin-audio">Audio File (MP3, WAV, M4A, FLAC)</Label>
+                    <Label htmlFor="admin-audio">Approx 12 to 15 min audio (MP3, WAV, M4A, FLAC)</Label>
                     <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-6 text-center hover:border-accent/50 transition-colors">
                       {audioFileRef.current?.files?.[0] ? (
                         <div className="text-sm">
@@ -801,9 +871,9 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={isUploading} 
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
                     className="w-full"
                   >
                     {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -863,7 +933,7 @@ export default function AdminPage() {
               <DialogHeader>
                 <DialogTitle>{selectedStory.title}</DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-6">
                 {/* Thumbnail */}
                 {selectedStory.thumbnailPath && (
@@ -881,6 +951,12 @@ export default function AdminPage() {
                 <div className="space-y-2 p-4 bg-accent/5 rounded-lg">
                   <p className="text-sm text-muted-foreground">Creator Email</p>
                   <p className="font-semibold text-lg">{selectedStory.userEmail}</p>
+                </div>
+
+                {/* Category song */}
+                <div className="space-y-2 p-4 bg-accent/5 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Category</p>
+                  <p className="font-semibold text-lg">{selectedStory.category ? selectedStory.category : "N/A"}</p>
                 </div>
 
                 {/* Description */}
@@ -1084,6 +1160,47 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Rejection Reason Modal */}
+      <Dialog open={isRejectModalOpen} onOpenChange={(open) => { if (!isRejecting) setIsRejectModalOpen(open); }}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <X className="h-5 w-5" />
+              Reject Story
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Please provide a reason for rejection. This will be recorded in the system.
+            </p>
+            <Textarea
+              placeholder="Enter rejection reason..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={5}
+              disabled={isRejecting}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectModalOpen(false)}
+              disabled={isRejecting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectWithReason}
+              disabled={isRejecting || !rejectionReason.trim()}
+            >
+              {isRejecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
