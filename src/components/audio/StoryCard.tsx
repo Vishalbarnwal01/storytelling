@@ -18,7 +18,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
   const [isLiked, setIsLiked] = useState(story.isLiked || false);
   const [likeCount, setLikeCount] = useState(story.likes);
   const [commentCount, setCommentCount] = useState(story.commentCount || 0);
-  const [duration, setDuration] = useState(story.duration || '00:00');
+  const duration = story.duration || '00:00';
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
@@ -54,25 +54,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
     };
   }, [story.id]);
 
-  // Calculate duration from audio file
-  useEffect(() => {
-    if (story.audioUrl) {
-      const audio = new Audio();
-      audio.src = story.audioUrl;
 
-      const updateDuration = () => {
-        if (audio.duration && !isNaN(audio.duration)) {
-          const minutes = Math.floor(audio.duration / 60);
-          const seconds = Math.floor(audio.duration % 60);
-          const formattedDuration = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-          setDuration(formattedDuration);
-        }
-      };
-
-      audio.addEventListener('loadedmetadata', updateDuration);
-      return () => audio.removeEventListener('loadedmetadata', updateDuration);
-    }
-  }, [story.audioUrl]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -283,7 +265,8 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
             </h3>
 
             {/* Author */}
-            <p className="text-sm text-muted-foreground mt-1">{story.author?.split('@')[0]}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {story.user_id == 0 ? "Admin" : story.author?.split('@')[0]}</p>
 
             {/* Engagement Stats */}
             <div className="mt-4 flex items-center justify-between">

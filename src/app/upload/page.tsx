@@ -61,13 +61,14 @@ export default function UploadPage() {
   function handleThumbnailChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (file) {
-      // Check if file is image
-      if (!file.type.startsWith('image/')) {
+      // Check if file is JPG or PNG only
+      if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
         toast({
           variant: 'destructive',
           title: 'Invalid File',
-          description: 'Please select a valid image file',
+          description: 'Only JPG and PNG images are allowed',
         });
+        event.target.value = '';
         return;
       }
 
@@ -301,7 +302,7 @@ export default function UploadPage() {
                     ref={thumbnailFileRef}
                     type="file"
                     className="hidden"
-                    accept="image/*"
+                    accept="image/jpeg,image/png"
                     onChange={handleThumbnailChange}
                     disabled={isLoading}
                     required
