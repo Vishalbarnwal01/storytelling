@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       await writeFile(thumbnailPath, Buffer.from(thumbnailBuffer));
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Insert song record with approved status for admin uploads
     await connection.query(
@@ -83,9 +83,6 @@ export async function POST(request: Request) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [0, title, category, description, audioFileName, thumbnailFileName, 'approved', 0, 0]
     );
-
-    connection.release();
-
     return Response.json({
       success: true,
       message: 'Story uploaded successfully and is now live',
@@ -97,5 +94,9 @@ export async function POST(request: Request) {
       { error: JSON.stringify(error) },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

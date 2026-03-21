@@ -52,9 +52,6 @@ export async function DELETE(
 
     // Delete user from database
     await connection.query('DELETE FROM users WHERE id = ?', [userId]);
-
-    connection.release();
-
     return NextResponse.json(
       { success: true, message: 'User and all their stories deleted successfully' },
       { status: 200 }
@@ -64,7 +61,6 @@ export async function DELETE(
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -74,5 +70,9 @@ export async function DELETE(
       { error: error.message || 'Delete failed' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

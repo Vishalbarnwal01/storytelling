@@ -34,8 +34,7 @@ export async function PUT(
     );
 
     if (!Array.isArray(existingSong) || existingSong.length === 0) {
-      connection.release();
-      return NextResponse.json(
+    return NextResponse.json(
         { error: 'Song not found or unauthorized' },
         { status: 404 }
       );
@@ -47,8 +46,7 @@ export async function PUT(
     // Handle new thumbnail if provided
     if (thumbnailFile && thumbnailFile.size > 0) {
       if (!thumbnailFile.type.startsWith('image/')) {
-        connection.release();
-        return NextResponse.json(
+    return NextResponse.json(
           { error: 'Invalid image file type' },
           { status: 400 }
         );
@@ -89,9 +87,6 @@ export async function PUT(
        WHERE id = ?`,
       [title, description, thumbnailPath, songId]
     );
-
-    connection.release();
-
     return NextResponse.json(
       {
         success: true,
@@ -108,7 +103,6 @@ export async function PUT(
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -146,8 +140,7 @@ export async function DELETE(
     );
 
     if (!Array.isArray(existingSong) || existingSong.length === 0) {
-      connection.release();
-      return NextResponse.json(
+    return NextResponse.json(
         { error: 'Song not found or unauthorized' },
         { status: 404 }
       );
@@ -173,9 +166,6 @@ export async function DELETE(
 
     // Delete from database
     await connection.query('DELETE FROM songs WHERE id = ?', [songId]);
-
-    connection.release();
-
     return NextResponse.json(
       { success: true, message: 'Story deleted successfully' },
       { status: 200 }
@@ -185,7 +175,6 @@ export async function DELETE(
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -195,5 +184,9 @@ export async function DELETE(
       { error: error.message || 'Delete failed' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

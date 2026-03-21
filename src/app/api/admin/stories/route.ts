@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
         s.views, 
         s.likes,
         s.created_at,
-        u.email
+        u.email,
+        (SELECT reason FROM song_rejections WHERE song_id = s.id ORDER BY id DESC LIMIT 1) as rejection_reason
       FROM songs s
       LEFT JOIN users u ON s.user_id = u.id
     `;
@@ -37,9 +38,6 @@ export async function GET(request: NextRequest) {
     query += ` ORDER BY s.created_at DESC`;
 
     const [stories] = await connection.query(query, params);
-
-    connection.release();
-
     const transformedStories = (stories as any[]).map((story) => ({
       id: story.id,
       userId: story.user_id,
@@ -53,6 +51,7 @@ export async function GET(request: NextRequest) {
       views: story.views || 0,
       likes: story.likes || 0,
       createdAt: story.created_at,
+      rejectionReason: story.rejection_reason || null,
     }));
 
     return NextResponse.json({ stories: transformedStories });
@@ -61,7 +60,6 @@ export async function GET(request: NextRequest) {
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -71,5 +69,9 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch stories' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

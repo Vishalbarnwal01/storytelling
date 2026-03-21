@@ -15,9 +15,9 @@ interface StoryCardProps {
 }
 
 export default function StoryCard({ story, playlist }: StoryCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(story.isLiked || false);
   const [likeCount, setLikeCount] = useState(story.likes);
-  const [commentCount, setCommentCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(story.commentCount || 0);
   const [duration, setDuration] = useState(story.duration || '00:00');
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -36,15 +36,6 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
     }
   }, []);
 
-  // Fetch like status when component mounts or user changes
-  useEffect(() => {
-    if (currentUser) {
-      fetchLikeStatus();
-      fetchCommentCount();
-    }
-  }, [currentUser, story.id]);
-
-  // Listen for like changes from detail page or other cards
   useEffect(() => {
     const handleLikeChange = (event: CustomEvent) => {
       const { storyId, isLiked, likeCount } = event.detail;
@@ -56,48 +47,12 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
       }
     };
 
-    // Also listen to global like change event to refresh like status
-    const handleGlobalLikeChange = () => {
-      if (currentUser) {
-        fetchLikeStatus();
-      }
-    };
-
     window.addEventListener('storyLikeChanged', handleLikeChange as EventListener);
-    window.addEventListener('storyLikeChanged', handleGlobalLikeChange);
 
     return () => {
       window.removeEventListener('storyLikeChanged', handleLikeChange as EventListener);
-      window.removeEventListener('storyLikeChanged', handleGlobalLikeChange);
     };
-  }, [story.id, currentUser]);
-
-  const fetchLikeStatus = async () => {
-    try {
-      const response = await fetch(
-        `/api/likes?songId=${story.id}&userId=${currentUser?.id || ''}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setLikeCount(data.likeCount);
-        setIsLiked(data.userHasLiked || false);
-      }
-    } catch (error) {
-      console.error('Error fetching like status:', error);
-    }
-  };
-
-  const fetchCommentCount = async () => {
-    try {
-      const response = await fetch(`/api/story/${story.id}/comments`);
-      if (response.ok) {
-        const data = await response.json();
-        setCommentCount(data.comments?.length || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    }
-  };
+  }, [story.id]);
 
   // Calculate duration from audio file
   useEffect(() => {
@@ -293,6 +248,13 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
 
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            {story.user_id == 0 && (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="bg-red-600 text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-md shadow-md">
+                  KW Verified
+                </span>
+              </div>
+            )}
 
             {/* Play Button - Bottom Right */}
             <button

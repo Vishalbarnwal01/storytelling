@@ -9,16 +9,12 @@ export async function GET(request: NextRequest) {
     const [users] = await connection.query(
       `SELECT id, email, created_at FROM users ORDER BY created_at DESC`
     );
-
-    connection.release();
-
     return NextResponse.json({ users });
   } catch (error: any) {
     console.error('Error fetching users:', error);
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -28,5 +24,9 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch users' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

@@ -12,15 +12,12 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     const result = await connection.query(
       `DELETE FROM comments WHERE id = ?`,
       [commentId]
     );
-
-    connection.release();
-
     return Response.json({
       success: true,
       message: 'Comment deleted successfully',
@@ -31,5 +28,9 @@ export async function DELETE(request: Request) {
       { error: 'Failed to delete comment' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

@@ -63,6 +63,7 @@ interface Story {
   createdAt: string;
   thumbnailPath: string;
   audioPath: string;
+  rejectionReason?: string;
 }
 
 interface AdminUser {
@@ -71,11 +72,21 @@ interface AdminUser {
 }
 
 const categories = [
-  { id: 'pop', name: 'Pop' },
-  { id: 'jazz', name: 'Jazz' },
-  { id: 'rock', name: 'Rock' },
-  { id: 'classical', name: 'Classical' },
+  { id: 'true-crime', name: 'True Crime' },
+  { id: 'mystery-thriller', name: 'Mystery & Thriller' },
+  { id: 'science-fiction', name: 'Science Fiction' },
+  { id: 'fantasy', name: 'Fantasy' },
+  { id: 'romance', name: 'Romance' },
+  { id: 'horror-paranormal', name: 'Horror & Paranormal' },
+  { id: 'historical-fiction', name: 'Historical Fiction' },
+  { id: 'biography', name: 'Biography' },
+  { id: 'action-adventure', name: 'Action & Adventure' },
+  { id: 'comedy-satire', name: 'Comedy & Satire' },
+  { id: 'suspenseful', name: 'Suspenseful' },
+  { id: 'inspirational', name: 'Inspirational' },
+  { id: 'mythology', name: 'Mythology' },
 ];
+
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -221,7 +232,7 @@ export default function AdminPage() {
 
       if (response.ok) {
         toast({ title: 'Success', description: 'Story rejected with reason saved' });
-        setStories(stories.map(s => s.id === rejectingStoryId ? { ...s, status: 'rejected' } : s));
+        setStories(stories.map(s => s.id === rejectingStoryId ? { ...s, status: 'rejected', rejectionReason: rejectionReason.trim() } : s));
         setIsRejectModalOpen(false);
         setSelectedStory(null);
       } else {
@@ -644,6 +655,13 @@ export default function AdminPage() {
                           <span className="text-xs text-muted-foreground">•</span>
                           <span className="text-xs text-muted-foreground">
                             👁️ {story.views} views
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {story.status === 'rejected' && story.rejectionReason && (
+                              <span className="text-xs text-red-500 ml-2">
+                                Rejected: {story.rejectionReason}
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div className="flex gap-2 items-center">

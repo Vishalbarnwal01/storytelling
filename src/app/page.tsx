@@ -33,7 +33,14 @@ export default function Home() {
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const response = await fetch(`/api/stories?ts=${Date.now()}`, {
+        const storedUser = localStorage.getItem('user');
+        const user = storedUser ? JSON.parse(storedUser) : null;
+        
+        const url = user?.id 
+          ? `/api/stories?ts=${Date.now()}&userId=${user.id}`
+          : `/api/stories?ts=${Date.now()}`;
+
+        const response = await fetch(url, {
           cache: "no-store"
         });
 
@@ -50,6 +57,9 @@ export default function Home() {
             duration: '00:00',
             likes: story.likes || 0,
             comments: [],
+            commentCount: story.comment_count || 0,
+            isLiked: story.user_has_liked === 1 || story.user_has_liked === true,
+            user_id: story.user_id || 0,
           }));
           setAllStories(transformedStories);
         }

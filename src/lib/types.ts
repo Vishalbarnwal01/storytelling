@@ -10,6 +10,8 @@ export interface Story {
   comments: Comment[];
   category?: string;
   commentCount?: number;
+  isLiked?: boolean;
+  user_id?: number | string;
 }
 
 export interface Comment {

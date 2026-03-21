@@ -1,7 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Clock, TrendingUp } from 'lucide-react';
+import { Clock, TrendingUp, Grid2X2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type FilterType = 'all' | 'trending' | 'newest' | string;
 
@@ -12,9 +13,11 @@ interface FilterTabsProps {
 }
 
 export default function FilterTabs({ activeFilter, onFilterChange, categories }: FilterTabsProps) {
+  const isCategoryActive = categories.some(c => c.id === activeFilter);
+
   return (
-    <div className='test'>
-      <div className="flex gap-3 mb-2">
+    <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6'>
+      <div className="flex flex-wrap gap-2">
         <Button
           variant={activeFilter === 'all' ? 'default' : 'outline'}
           onClick={() => onFilterChange('all')}
@@ -41,19 +44,30 @@ export default function FilterTabs({ activeFilter, onFilterChange, categories }:
           Newest
         </Button>
       </div>
-      <div className='flex-gap-3 '>
-        {categories.map((category) => (
-          <Button
-            key={category.id}
-            variant={activeFilter === category.id ? 'default' : 'outline'}
-            onClick={() => onFilterChange(category.id)}
-            className="whitespace-nowrap mr-2"
-          >
-            {category.name}
-          </Button>
-        ))}
+
+      <div className="w-full md:w-[250px]">
+        <Select 
+          value={isCategoryActive ? activeFilter : "placeholder"} 
+          onValueChange={(val) => {
+            if (val && val !== "placeholder") onFilterChange(val);
+          }}
+        >
+          <SelectTrigger className={isCategoryActive ? "border-primary" : ""}>
+            <div className="flex items-center gap-2">
+              <Grid2X2 className="w-4 h-4 opacity-70" />
+              <SelectValue placeholder="Categories" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="placeholder" disabled className="text-muted-foreground">Select a category...</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
-
   );
 }

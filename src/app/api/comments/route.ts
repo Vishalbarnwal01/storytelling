@@ -12,16 +12,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     await connection.query(
       `INSERT INTO comments (song_id, user_id, user_email, comment_text) 
        VALUES (?, ?, ?, ?)`,
       [songId, userId, userEmail, commentText]
     );
-
-    connection.release();
-
     return Response.json({
       success: true,
       message: 'Comment posted successfully',
@@ -32,5 +29,9 @@ export async function POST(request: Request) {
       { error: 'Failed to post comment' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

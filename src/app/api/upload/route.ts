@@ -101,9 +101,6 @@ export async function POST(request: NextRequest) {
         thumbnailFileName
       ]
     );
-
-    connection.release();
-
     return NextResponse.json(
       {
         success: true,
@@ -121,7 +118,6 @@ export async function POST(request: NextRequest) {
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -131,5 +127,9 @@ export async function POST(request: NextRequest) {
       { error: error.message || 'Upload failed' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

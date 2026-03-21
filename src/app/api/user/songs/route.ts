@@ -27,21 +27,20 @@ export async function GET(request: NextRequest) {
         status, 
         views, 
         likes,
-        created_at 
+        created_at,
+        (SELECT reason FROM song_rejections WHERE song_id = songs.id ORDER BY id DESC LIMIT 1) as rejection_reason 
        FROM songs 
        WHERE user_id = ? 
        ORDER BY created_at DESC`,
       [parseInt(userId)]
     );
-
-    connection.release();
-
     // Transform data to match frontend interface
     const transformedSongs = (songs as any[]).map((song) => ({
       id: song.id,
       title: song.title,
       category: song.category,
       status: song.status as 'approved' | 'pending' | 'rejected',
+      rejectionReason: song.rejection_reason || null,
       uploadedAt: new Date(song.created_at).toISOString().split('T')[0],
       views: song.views || 0,
       description: song.description,
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
 
     if (connection) {
       try {
-        connection.release();
       } catch (e) {
         console.error('Error releasing connection:', e);
       }
@@ -65,5 +63,9 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to fetch songs' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

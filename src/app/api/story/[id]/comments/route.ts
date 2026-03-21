@@ -7,7 +7,7 @@ export async function GET(
   try {
     const storyId = params.id;
     
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
     
     const [comments] = await connection.query(
       `SELECT id, user_id, user_email, comment_text, created_at 
@@ -16,14 +16,15 @@ export async function GET(
        ORDER BY created_at DESC`,
       [storyId]
     );
-
-    connection.release();
-
     return Response.json({
       comments: comments || [],
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return Response.json({ error: 'Failed to fetch comments' }, { status: 500 });
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

@@ -20,10 +20,19 @@ export default function UploadPage() {
   const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const categories = [
-    { id: 'pop', name: 'Pop' },
-    { id: 'jazz', name: 'Jazz' },
-    { id: 'rock', name: 'Rock' },
-    { id: 'classical', name: 'Classical' },
+    { id: 'true-crime', name: 'True Crime' },
+    { id: 'mystery-thriller', name: 'Mystery & Thriller' },
+    { id: 'science-fiction', name: 'Science Fiction' },
+    { id: 'fantasy', name: 'Fantasy' },
+    { id: 'romance', name: 'Romance' },
+    { id: 'horror-paranormal', name: 'Horror & Paranormal' },
+    { id: 'historical-fiction', name: 'Historical Fiction' },
+    { id: 'biography', name: 'Biography' },
+    { id: 'action-adventure', name: 'Action & Adventure' },
+    { id: 'comedy-satire', name: 'Comedy & Satire' },
+    { id: 'suspenseful', name: 'Suspenseful' },
+    { id: 'inspirational', name: 'Inspirational' },
+    { id: 'mythology', name: 'Mythology' },
   ];
   const [uploadCategory, setUploadCategory] = useState('');
   const [isUploading, setIsUploading] = useState(false);

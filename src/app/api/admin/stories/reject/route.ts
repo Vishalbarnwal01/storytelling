@@ -8,7 +8,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Update song status to rejected
     await connection.query(
@@ -21,12 +21,13 @@ export async function POST(request: Request) {
       `INSERT INTO song_rejections (song_id, admin_id, reason, rejected_at) VALUES (?, ?, ?, NOW())`,
       [songId, adminId, reason.trim()]
     );
-
-    connection.release();
-
     return Response.json({ success: true, message: 'Story rejected and reason stored' });
   } catch (error) {
     console.error('Error rejecting story:', error);
     return Response.json({ error: 'Failed to reject story' }, { status: 500 });
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

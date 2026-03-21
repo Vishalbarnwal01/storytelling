@@ -39,6 +39,7 @@ interface Song {
   views?: number;
   thumbnail?: string;
   audio?: string;
+  rejectionReason?: string;
 }
 
 interface User {
@@ -99,6 +100,7 @@ export default function DashboardPage() {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState(false);
+  const [rejectionModal, setRejectionModal] = useState<{isOpen: boolean, reason: string}>({isOpen: false, reason: ''});
 
   useEffect(() => {
     // Check if user is logged in
@@ -360,7 +362,20 @@ export default function DashboardPage() {
                         <TableCell>
                           {new Date(song.uploadedAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>{getStatusBadge(song.status)}</TableCell>
+                        <TableCell>
+                          {song.status === 'rejected' ? (
+                            <Badge 
+                              variant="destructive" 
+                              className="cursor-pointer hover:bg-destructive/80 transition-colors"
+                              title="Click to see reason"
+                              onClick={() => setRejectionModal({ isOpen: true, reason: song.rejectionReason || 'No reason specified' })}
+                            >
+                              Rejected
+                            </Badge>
+                          ) : (
+                            getStatusBadge(song.status)
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           {song.views || 0}
                         </TableCell>
@@ -515,6 +530,28 @@ export default function DashboardPage() {
                 variant="outline"
                 onClick={() => setIsAudioPlayerOpen(false)}
               >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Reason Modal */}
+        <Dialog open={rejectionModal.isOpen} onOpenChange={(open) => setRejectionModal({ ...rejectionModal, isOpen: open })}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle className="text-destructive flex items-center gap-2">
+                Story Rejected
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <h4 className="text-sm font-semibold mb-2">Rejection Reason:</h4>
+              <p className="text-sm text-foreground bg-muted p-3 rounded-md border">
+                {rejectionModal.reason}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectionModal({ isOpen: false, reason: '' })}>
                 Close
               </Button>
             </DialogFooter>

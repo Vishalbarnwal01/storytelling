@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Check if user already liked this song
     const [existingLike] = await connection.query(
@@ -21,8 +21,7 @@ export async function POST(request: Request) {
     );
 
     if (existingLike && existingLike.length > 0) {
-      connection.release();
-      return Response.json(
+    return Response.json(
         { error: 'User already liked this song' },
         { status: 409 }
       );
@@ -40,9 +39,6 @@ export async function POST(request: Request) {
       `SELECT COUNT(*) as count FROM likes WHERE song_id = ?`,
       [songId]
     );
-
-    connection.release();
-
     return Response.json({
       success: true,
       message: 'Like added successfully',
@@ -70,7 +66,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const connection = await db.getConnection();
+    var connection = await db.getConnection();
 
     // Get like count for the song
     const [likeCount] = await connection.query(
@@ -87,9 +83,6 @@ export async function GET(request: Request) {
       );
       userHasLiked = userLike && userLike.length > 0;
     }
-
-    connection.release();
-
     return Response.json({
       likeCount: likeCount[0].count,
       userHasLiked,
@@ -100,5 +93,9 @@ export async function GET(request: Request) {
       { error: 'Failed to fetch likes' },
       { status: 500 }
     );
+  } finally {
+    if (connection) {
+      try { connection.release(); } catch(e) {}
+    }
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Clock, MessageCircle, Heart, User, Trash2, Loader2, Calendar, Play, Pause, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -58,6 +58,14 @@ export default function StoryDetailPage() {
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [duration, setDuration] = useState('00:00');
   const [allStories, setAllStories] = useState<any[]>([]);
+  const prevAudioIdRef = useRef(currentAudio?.id);
+
+  useEffect(() => {
+    if (currentAudio?.id && prevAudioIdRef.current && currentAudio.id !== prevAudioIdRef.current) {
+      router.push(`/story/${currentAudio.id}`);
+    }
+    prevAudioIdRef.current = currentAudio?.id;
+  }, [currentAudio?.id, router]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -593,7 +601,7 @@ export default function StoryDetailPage() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <p className="font-semibold text-sm">{comment.user_email}</p>
+                    <p className="font-semibold text-sm">{comment.user_email.split('@')[0]}</p>
                     <div className="flex items-center gap-2">
                       <p className="text-xs text-muted-foreground whitespace-nowrap">
                         {new Date(comment.created_at).toLocaleDateString()}
