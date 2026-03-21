@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import StoryCard from '@/components/audio/StoryCard';
 import Footer from '@/components/layout/Footer';
 import type { Story } from '@/lib/types';
+import Image from "next/image";
 
 export default function Home() {
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -81,46 +82,54 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 space-y-16 container mx-auto px-4 py-8 md:py-12">
         {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/20 to-blue-500/20 py-16 px-6 md:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <section className="relative overflow-hidden rounded-3xl py-20 md:py-28 px-6 md:px-12 bg-[#0B0A10]">
+
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_50%,#3B1E77_0%,#1B0F3A_45%,#0B0A10_100%)]" />
+
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+
+            {/* Left */}
             <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight text-[#8A5CF5]">
                 Share Your Voice, <br />
                 Tell Your Story
               </h1>
 
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-gray-400 max-w-lg">
                 Join our community of storytellers and listeners. Upload your audio stories, discover new voices, and connect through the power of sound.
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg">
+                <Button className="bg-[#4F6DF5] hover:bg-[#3f5ce0]" asChild size="lg">
                   <Link href="/explore">
                     <Play size={18} className="mr-2" />
                     Explore Stories
                   </Link>
                 </Button>
-                <Button onClick={handleShareStory} variant="outline" size="lg">
+
+                <Button className="bg-gradient-to-r from-[#C026D3] to-[#8A5CF5] border-0" onClick={handleShareStory} variant="outline" size="lg">
                   <Upload size={18} className="mr-2" />
                   Share Your Story
                 </Button>
               </div>
             </div>
 
+            {/* Right */}
             <div className="relative hidden md:block">
-              <div className="relative z-10 aspect-video w-full max-w-[500px] mx-auto">
+              
+              <div className="relative z-10 w-full max-w-[540px] mx-auto">
                 <img
+                  src="/images/rcording.avif"
                   alt="Person recording audio"
-                  className="rounded-xl shadow-2xl w-full h-full object-cover"
-                  src="https://images.unsplash.com/photo-1566581478686-a797f6dc37e2?w=800&h=450&fit=crop"
+                  className="rounded-xl shadow-[0_0_80px_rgba(138,92,245,0.2)] w-full h-auto object-contain"
                 />
               </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-primary/20 rounded-full blur-3xl -z-10" />
-            </div>
-          </div>
 
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+              <div className="absolute top-1/2 left-[55%] -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-[#8A5CF5]/25 rounded-full blur-[140px] -z-10" />
+            </div>
+
+          </div>
         </section>
 
         {isLoading ? (
