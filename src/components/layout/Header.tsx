@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { BarChart3, Headphones, LogOut, Menu, Upload } from 'lucide-react';
+import { BarChart3, Headphones, LogOut, Menu, Upload, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -126,6 +126,12 @@ export default function Header() {
                       <span>My Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Update Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -202,6 +208,14 @@ export default function Header() {
                       >
                         <BarChart3 className="mr-3 h-5 w-5" />
                         <span className="font-medium">My Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="flex items-center text-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Settings className="mr-3 h-5 w-5" />
+                        <span className="font-medium">Update Profile</span>
                       </Link>
                       <button
                         onClick={() => {

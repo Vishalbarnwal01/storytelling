@@ -103,3 +103,56 @@ export async function getUserByEmail(email: string) {
     connection.release();
   }
 }
+
+export async function getUserById(userId: number) {
+  const connection = await db.getConnection();
+  try {
+    const [rows] = await connection.query(
+      "SELECT id, email, name, password, googleId, isGoogleAuth FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { success: false, user: null };
+    }
+
+    return { success: true, user: rows[0] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  } finally {
+    connection.release();
+  }
+}
+
+export async function updateUserProfile(userId: number, name?: string, hashedPassword?: string) {
+  const connection = await db.getConnection();
+  try {
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (name !== undefined) {
+      updates.push("name = ?");
+      values.push(name);
+    }
+
+    if (hashedPassword !== undefined) {
+      updates.push("password = ?");
+      values.push(hashedPassword);
+    }
+
+    if (updates.length === 0) {
+      return { success: false, error: "No updates provided" };
+    }
+
+    values.push(userId);
+
+    const query = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+    const [result] = await connection.query(query, values);
+
+    return { success: true, result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  } finally {
+    connection.release();
+  }
+}
