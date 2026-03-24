@@ -101,14 +101,14 @@ export default function Home() {
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <Button className="bg-[#4F6DF5] hover:bg-[#3f5ce0]" asChild size="lg">
+                <Button className="bg-[#6E27D9] hover:bg-[#6E27D9]" asChild size="lg">
                   <Link href="/explore">
                     <Play size={18} className="mr-2" />
                     Explore Stories
                   </Link>
                 </Button>
 
-                <Button className="bg-gradient-to-r from-[#C026D3] to-[#8A5CF5] border-0" onClick={handleShareStory} variant="outline" size="lg">
+                <Button className="bg-[#09090B] hover:bg-[#09090B] hover:text-white hover:shadow-none transition-none" onClick={handleShareStory} size="lg">
                   <Upload size={18} className="mr-2" />
                   Share Your Story
                 </Button>
@@ -210,7 +210,11 @@ export default function Home() {
               <div className="relative z-10 text-center space-y-6 max-w-2xl mx-auto">
                 <h2 className="text-3xl font-bold">Ready to Share Your Story?</h2>
                 <p className="text-white/80">Join thousands of storytellers who are sharing their voices with the world.</p>
-                <Button onClick={handleShareStory} size="lg" variant="secondary">
+                <Button 
+                    className="bg-[#09090B] border-0 hover:bg-[#09090B] hover:text-white hover:shadow-none transition-none"
+                    onClick={handleShareStory} 
+                    size="lg"
+                  >
                   Get Started
                 </Button>
               </div>

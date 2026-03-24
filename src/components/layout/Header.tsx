@@ -140,7 +140,7 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild>
+              <Button className="bg-[#6E27D9] hover:bg-[#6E27D9]" asChild>
                 <Link href="/login">Login</Link>
               </Button>
             )}
