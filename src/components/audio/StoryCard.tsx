@@ -233,7 +233,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
             {story.user_id == 0 && (
               <div className="absolute top-3 left-3 z-10">
                 <span className="bg-red-600 text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-md shadow-md">
-                  KW Verified
+                  KW Original
                 </span>
               </div>
             )}

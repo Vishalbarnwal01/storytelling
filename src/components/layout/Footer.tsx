@@ -77,9 +77,10 @@ const Footer = () => {
         </div>
         
         <div className="mt-8 pt-8 border-t text-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} AudioVerse. All rights reserved.
-          </p>
+         <p className="text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Kahaniwaala. All rights reserved. • Made with ❤️ by Codestackhub
+        </p>
+         
         </div>
       </div>
     </footer>
