@@ -1,18 +1,17 @@
 'use client';
 
-import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Clock, MessageCircle, Heart, User, Trash2, Loader2, Calendar, Play, Pause, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 import { useAudio } from '@/contexts/AudioContext';
+import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { Calendar, Clock, Heart, Loader2, MessageCircle, Pause, Play, Share2, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 interface Story {
   id: number;
@@ -358,7 +357,7 @@ export default function StoryDetailPage() {
     const song = {
       id: story.id,
       title: story.title,
-      author: story.creatorName || 'John',
+      author: story.user_id == 0 ? "Admin" : story.author?.split('@')[0],
       coverImage: story.coverImage || `/uploads/${story.thumbnailPath}`,
       audioUrl: audioUrl,
     };
@@ -454,7 +453,7 @@ export default function StoryDetailPage() {
               <AvatarFallback>{story.creatorName ? story.creatorName.charAt(0).toUpperCase() : 'J'}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold text-base">{story.creatorName || 'John'}</p>
+              <p className="font-semibold text-base">{story.user_id == 0 ? "Admin" : story.author?.split('@')[0]}</p>
               <p className="text-xs text-muted-foreground">Storyteller</p>
             </div>
           </div>

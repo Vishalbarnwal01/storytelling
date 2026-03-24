@@ -48,6 +48,7 @@ export default function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const router = useRouter();
 
   // Sign In form state
@@ -114,36 +115,47 @@ export default function LoginForm() {
   };
 
   useEffect(() => {
-    const loadGoogleScript = () => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        setTimeout(() => {
-          if (window.google) {
-            window.google.accounts.id.initialize({
-              client_id: '377169052223-3pp8rooi3uiln39kqguv8qbmku84iok8.apps.googleusercontent.com',
-              callback: handleGoogleAuth,
-            });
-            const googleButtonContainer = document.getElementById('google-signin-button');
-            if (googleButtonContainer) {
-              window.google.accounts.id.renderButton(googleButtonContainer, {
-                theme: 'outline',
-                size: 'large',
-                width: '100%',
-              });
-            }
-          }
-        }, 0);
-      };
-      document.body.appendChild(script);
-    };
-
-    if (!window.google) {
-      loadGoogleScript();
+    if (window.google) {
+      setIsGoogleLoaded(true);
+      return;
     }
+    
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => setIsGoogleLoaded(true));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setIsGoogleLoaded(true);
+    document.body.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    if (isGoogleLoaded && window.google) {
+      window.google.accounts.id.initialize({
+        client_id: '377169052223-3pp8rooi3uiln39kqguv8qbmku84iok8.apps.googleusercontent.com',
+        callback: handleGoogleAuth,
+      });
+
+      // Provide a slight delay so Radix Tabs can mount the active tab content
+      setTimeout(() => {
+        const containerId = activeTab === 'signin' ? 'google-signin-button-signin' : 'google-signin-button-signup';
+        const googleButtonContainer = document.getElementById(containerId);
+        if (googleButtonContainer) {
+          googleButtonContainer.innerHTML = '';
+          window.google.accounts.id.renderButton(googleButtonContainer, {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+          });
+        }
+      }, 50);
+    }
+  }, [isGoogleLoaded, activeTab]);
 
   async function onSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -326,7 +338,7 @@ export default function LoginForm() {
               </div>
 
               <div 
-                id="google-signin-button" 
+                id="google-signin-button-signin" 
                 className="w-full flex justify-center"
                 style={{ display: 'flex', justifyContent: 'center' }}
               />
@@ -396,7 +408,7 @@ export default function LoginForm() {
               </div>
 
               <div 
-                id="google-signin-button" 
+                id="google-signin-button-signup" 
                 className="w-full flex justify-center"
                 style={{ display: 'flex', justifyContent: 'center' }}
               />

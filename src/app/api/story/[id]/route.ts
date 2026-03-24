@@ -23,6 +23,7 @@ export async function GET(
 
     return Response.json({
       id: story.id,
+      user_id: story.user_id,
       title: story.title,
       description: story.description,
       audioPath: story.audio_path,
@@ -38,7 +39,7 @@ export async function GET(
     return Response.json({ error: 'Failed to fetch story' }, { status: 500 });
   } finally {
     if (connection) {
-      try { connection.release(); } catch(e) {}
+      try { connection.release(); } catch (e) { }
     }
   }
 }
