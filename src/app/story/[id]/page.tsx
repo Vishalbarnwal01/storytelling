@@ -127,7 +127,7 @@ export default function StoryDetailPage() {
           const transformedStories = (storiesData.stories || []).map((s: any) => ({
             id: s.id.toString(),
             title: s.title,
-            author: s.creator_name ? s.creator_name : 'John',
+            author: s.user_id == 0 ? "Admin" : s.author?.split('@')[0],
             coverImage: s.thumbnail_path ? `/uploads/${s.thumbnail_path}` : '/placeholder.jpg',
             audioUrl: s.audio_path ? `/uploads/${s.audio_path}` : '',
           }));

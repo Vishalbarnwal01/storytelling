@@ -69,13 +69,16 @@ export default function ExplorePage() {
           const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
             id: story.id.toString(),
             title: story.title,
+            user_id: story.user_id,
             category: story.category,
-            author: story.creator_name ? story.creator_name : 'John',
+            author: story.user_id != 0 ? story.creator_name?.split('@')[0] : "Admin",
+            likes: story.likes_count !== undefined ? story.likes_count : (story.likes || 0),
             coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
             imageHint: 'story cover',
             audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
             duration: '00:00',
-            likes: story.likes || 0,
+            isLiked: story.user_has_liked === 1 || story.user_has_liked === true,
+            // likes: story.likes || 0,
             commentCount: Number(story.comment_count) || 0,
             comments: [],
           }));

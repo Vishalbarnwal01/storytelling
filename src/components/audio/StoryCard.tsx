@@ -179,6 +179,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
     const song = {
       id: Number(story.id),
       title: story.title,
+      user_id: story.user_id,
       author: story.author,
       coverImage: story.coverImage,
       audioUrl: story.audioUrl,
@@ -189,6 +190,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
       const playlistWithNumbers = playlist.map(s => ({
         id: Number(s.id),
         title: s.title,
+        user_id: s.user_id,
         author: s.author,
         coverImage: s.coverImage,
         audioUrl: s.audioUrl,
@@ -266,7 +268,8 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
 
             {/* Author */}
             <p className="text-sm text-muted-foreground mt-1">
-              {story.user_id == 0 ? "Admin" : story.author?.split('@')[0]}</p>
+              {story.author}
+            </p>
 
             {/* Engagement Stats */}
             <div className="mt-4 flex items-center justify-between">
