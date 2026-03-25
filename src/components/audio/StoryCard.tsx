@@ -3,7 +3,8 @@
 import { useAudio } from '@/contexts/AudioContext';
 import { useToast } from '@/hooks/use-toast';
 import type { Story } from '@/lib/types';
-import { Clock, Pause, Play } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Clock, Heart, MessageCircle, Pause, Play } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -267,11 +268,12 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
 
             {/* Author */}
             <p className="text-sm text-muted-foreground mt-1">
-              {story.user_id == 0 ? "Admin" : story.author?.split('@')[0]}</p>
+              {story.author}
+            </p>
 
             {/* Engagement Stats */}
             <div className="mt-4 flex items-center justify-between">
-              {/* <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4">
                 <div
                   className="flex items-center space-x-1 cursor-pointer hover:opacity-70 transition-opacity"
                   onClick={handleLike}
@@ -290,7 +292,7 @@ export default function StoryCard({ story, playlist }: StoryCardProps) {
                   <MessageCircle size={14} className="text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">{commentCount}</span>
                 </div>
-              </div> */}
+              </div>
 
               {/* <span className="text-xs text-muted-foreground">2min</span> */}
             </div>
