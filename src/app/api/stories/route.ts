@@ -10,9 +10,9 @@ export async function GET(req: NextRequest) {
     let query = `SELECT s.id, s.title, s.category, s.user_id, s.thumbnail_path, s.audio_path, 
               s.description, s.likes, s.views, s.created_at, u.email as creator_name,
               (SELECT COUNT(*) FROM comments c WHERE c.song_id = s.id) as comment_count`;
-    
+
     if (userId) {
-       query += `, (SELECT COUNT(*) FROM likes l WHERE l.song_id = s.id AND l.user_id = ?) > 0 as user_has_liked`;
+      query += `, (SELECT COUNT(*) FROM likes l WHERE l.song_id = s.id AND l.user_id = ?) > 0 as user_has_liked`;
     }
 
     query += ` FROM songs s
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       query,
       userId ? [userId] : []
     );
-    
+
     return Response.json({
       stories: stories || [],
     });
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Failed to fetch stories' }, { status: 500 });
   } finally {
     if (connection) {
-      try { connection.release(); } catch(e) {}
+      try { connection.release(); } catch (e) { }
     }
   }
 }

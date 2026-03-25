@@ -28,7 +28,7 @@ export async function GET(
       description: story.description,
       audioPath: story.audio_path,
       thumbnailPath: story.thumbnail_path,
-      creatorName: story.creator_name || 'John',
+      creatorName: story.user_id == 0 ? "Admin" : story.author?.split('@')[0],
       status: story.status,
       views: story.views,
       likes: story.likes,

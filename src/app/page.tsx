@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Play, Headphones, Upload, TrendingUp, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import StoryCard from '@/components/audio/StoryCard';
 import Footer from '@/components/layout/Footer';
+import { Button } from '@/components/ui/button';
 import type { Story } from '@/lib/types';
-import Image from "next/image";
+import { Headphones, Loader2, Play, TrendingUp, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -36,8 +35,8 @@ export default function Home() {
       try {
         const storedUser = localStorage.getItem('user');
         const user = storedUser ? JSON.parse(storedUser) : null;
-        
-        const url = user?.id 
+
+        const url = user?.id
           ? `/api/stories?ts=${Date.now()}&userId=${user.id}`
           : `/api/stories?ts=${Date.now()}`;
 
@@ -51,7 +50,7 @@ export default function Home() {
           const transformedStories: Story[] = (data.stories || []).map((story: any) => ({
             id: story.id.toString(),
             title: story.title,
-            author: story.creator_name ? story.creator_name : "John Doe",
+            author: story.user_id == 0 ? "Admin" : story.author?.split('@')[0],
             coverImage: story.thumbnail_path ? `/uploads/${story.thumbnail_path}` : '/placeholder.jpg',
             imageHint: 'story cover',
             audioUrl: story.audio_path ? `/uploads/${story.audio_path}` : '',
@@ -117,7 +116,7 @@ export default function Home() {
 
             {/* Right */}
             <div className="relative hidden md:block">
-              
+
               <div className="relative z-10 w-full max-w-[540px] mx-auto">
                 <img
                   src="/images/rcording.avif"
@@ -210,11 +209,11 @@ export default function Home() {
               <div className="relative z-10 text-center space-y-6 max-w-2xl mx-auto">
                 <h2 className="text-3xl font-bold">Ready to Share Your Story?</h2>
                 <p className="text-white/80">Join thousands of storytellers who are sharing their voices with the world.</p>
-                <Button 
-                    className="bg-[#09090B] border-0 hover:bg-[#09090B] hover:text-white hover:shadow-none transition-none"
-                    onClick={handleShareStory} 
-                    size="lg"
-                  >
+                <Button
+                  className="bg-[#09090B] border-0 hover:bg-[#09090B] hover:text-white hover:shadow-none transition-none"
+                  onClick={handleShareStory}
+                  size="lg"
+                >
                   Get Started
                 </Button>
               </div>
