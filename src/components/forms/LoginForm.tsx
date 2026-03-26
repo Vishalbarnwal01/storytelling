@@ -137,7 +137,7 @@ export default function LoginForm() {
   useEffect(() => {
     if (isGoogleLoaded && window.google) {
       window.google.accounts.id.initialize({
-        client_id: '377169052223-3pp8rooi3uiln39kqguv8qbmku84iok8.apps.googleusercontent.com',
+        client_id: '51775486600-jretum5tkfjp70davk13ns97lb3ktdnr.apps.googleusercontent.com',
         callback: handleGoogleAuth,
       });
 
