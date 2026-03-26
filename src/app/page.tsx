@@ -1,7 +1,6 @@
 'use client';
 
 import StoryCard from '@/components/audio/StoryCard';
-import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import type { Story } from '@/lib/types';
 import { Headphones, Loader2, Play, TrendingUp, Upload } from 'lucide-react';
@@ -228,7 +227,7 @@ export default function Home() {
         )}
       </div>
 
-      <Footer />
+    
     </div>
   );
 }
