@@ -42,21 +42,21 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li>
+              {/* <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service
                 </a>
-              </li>
+              </li> */}
               <li>
-                <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Privacy Policy
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Cookie Policy
                 </a>
-              </li>
+              </li> */}
             </ul>
           </div>
           

@@ -1,5 +1,6 @@
 import GlobalAudioPlayer from '@/components/audio/GlobalAudioPlayer';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import { Toaster } from '@/components/ui/toaster';
 import { AudioProvider } from '@/contexts/AudioContext';
 import type { Metadata } from 'next';
@@ -49,6 +50,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
+            <Footer />
           </div>
           <GlobalAudioPlayer />
           <Toaster />

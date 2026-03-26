@@ -50,8 +50,22 @@ export default function UploadPage() {
           title: 'Invalid File',
           description: 'Please select a valid audio file',
         });
+        event.target.value = '';
         return;
       }
+
+      // Check file size (30MB = 31457280 bytes)
+      const maxSize = 30 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({
+          variant: 'destructive',
+          title: 'File Size Exceeded',
+          description: 'Song size exceed. Kindly upload lower than 30 MB',
+        });
+        event.target.value = '';
+        return;
+      }
+
       setAudioFileName(file.name);
     } else {
       setAudioFileName(null);
@@ -316,7 +330,7 @@ export default function UploadPage() {
 
             {/* Audio File */}
             <div className="space-y-2">
-              <Label htmlFor="audio"> Approx 12 to 15 min audio (MP3, WAV, M4A, FLAC) *</Label>
+              <Label htmlFor="audio">Audio File - Max Size 30 MB (MP3, WAV, M4A, FLAC) *</Label>
               <div className="relative flex items-center justify-center w-full">
                 <label
                   htmlFor="audio"
@@ -331,7 +345,7 @@ export default function UploadPage() {
                         <p className="mb-2 text-sm text-muted-foreground">
                           <span className="font-semibold">Click to upload</span> or drag and drop
                         </p>
-                        <p className="text-xs text-muted-foreground">MP3, WAV, M4A, FLAC (Max 50MB)</p>
+                        <p className="text-xs text-muted-foreground">MP3, WAV, M4A, FLAC (Max 30MB)</p>
                       </>
                     )}
                   </div>
