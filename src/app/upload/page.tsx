@@ -86,6 +86,18 @@ export default function UploadPage() {
         return;
       }
 
+      // Check file size (5MB = 5242880 bytes)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({
+          variant: 'destructive',
+          title: 'File Size Exceeded',
+          description: 'This image is higher size of 5MB. Please upload a smaller image.',
+        });
+        event.target.value = '';
+        return;
+      }
+
       setThumbnailFileName(file.name);
 
       // Create preview
