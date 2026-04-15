@@ -23,14 +23,18 @@ export async function DELETE(
 
     // Get all songs for this user
     const [songs] = await connection.query(
-      'SELECT audio_path, thumbnail_path FROM songs WHERE user_id = ?',
+      'SELECT id, audio_path, thumbnail_path FROM songs WHERE user_id = ?',
       [userId]
     );
 
-    // Delete files from filesystem
+    // Delete files from filesystem and gather song IDs
     const uploadDir = join(process.cwd(), 'public', 'uploads');
+    const songIds: number[] = [];
+
     if (Array.isArray(songs)) {
       for (const song of songs as any[]) {
+        songIds.push(song.id);
+
         try {
           const audioPath = join(uploadDir, song.audio_path);
           const thumbnailPath = join(uploadDir, song.thumbnail_path);
@@ -47,13 +51,35 @@ export async function DELETE(
       }
     }
 
+    // Delete related data for the user's stories
+    if (songIds.length > 0) {
+      const placeholders = songIds.map(() => '?').join(', ');
+
+      await connection.query(
+        `DELETE FROM likes WHERE song_id IN (${placeholders})`,
+        songIds
+      );
+      await connection.query(
+        `DELETE FROM comments WHERE song_id IN (${placeholders})`,
+        songIds
+      );
+      await connection.query(
+        `DELETE FROM song_rejections WHERE song_id IN (${placeholders})`,
+        songIds
+      );
+    }
+
+    // Delete likes and comments created by the user
+    await connection.query('DELETE FROM likes WHERE user_id = ?', [userId]);
+    await connection.query('DELETE FROM comments WHERE user_id = ?', [userId]);
+
     // Delete songs from database
     await connection.query('DELETE FROM songs WHERE user_id = ?', [userId]);
 
     // Delete user from database
     await connection.query('DELETE FROM users WHERE id = ?', [userId]);
     return NextResponse.json(
-      { success: true, message: 'User and all their stories deleted successfully' },
+      { success: true, message: 'User and all their related data deleted successfully' },
       { status: 200 }
     );
   } catch (error: any) {
